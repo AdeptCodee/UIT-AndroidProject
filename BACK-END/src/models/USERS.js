@@ -37,9 +37,9 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      sparse: true, // Cho phép giá trị trống}
+      sparse: true, // Cho phép giá trị trống
     },
-  },
+    },
   {
     timestamps: true,
   },
