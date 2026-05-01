@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
 import { protectedRoute } from "./middlewares/authMiddleware.js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const PORT = process.env.PORT || 5001;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({origin: process.env.CLIENT_URL, credentials: true})); // Cấu hình CORS để cho phép frontend truy cập với cookie
 
 // Public routes
 app.use("/api/auth", authRoutes);

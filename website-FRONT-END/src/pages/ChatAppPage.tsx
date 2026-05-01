@@ -1,5 +1,10 @@
+import Logout from "@/components/auth/logout";
 import React from "react";
 
 export const ChatAppPage = () => {
-  return <div>Chat App Page</div>;
+  return (
+    <div>
+      <Logout />
+    </div>
+  );
 };

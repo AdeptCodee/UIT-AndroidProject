@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router";
 
-const signUpSchema = z.object({
-  firstName: z.string().min(1, { message: "Vui lòng nhập tên" }),
-  lastName: z.string().min(1, { message: "Vui lòng nhập họ" }),
+const signInSchema = z.object({
   username: z
     .string()
     .min(3, { message: "Tên đăng nhập phải có ít nhất 3 ký tự" })
@@ -17,26 +17,31 @@ const signUpSchema = z.object({
     .regex(/^[a-zA-Z0-9_]+$/, {
       message: "Tên đăng nhập chỉ được chứa chữ cái, số và gạch dưới",
     }),
-  email: z.email({ message: "Địa chỉ email không hợp lệ" }),
   password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" }),
 });
 
-type SignUpFormValues = z.infer<typeof signUpSchema>;
+type SignInFormValues = z.infer<typeof signInSchema>;
 
-export function SignupForm({
+export function SignInForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { signIn } = useAuthStore();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
   });
 
-  const onSubmit = async (data: SignUpFormValues) => {
-    // Gọi backend API để đăng ký tài khoản
+  const onSubmit = async (data: SignInFormValues) => {
+    const { username, password } = data;
+
+    // Gọi backend API để đăng nhập
+    await signIn(username, password);
+    navigate("/"); // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
   };
 
   return (
@@ -53,50 +58,10 @@ export function SignupForm({
                   {/* Thêm giới hạn chiều cao h-12 cho logo để tránh bị chiếm diện tích */}
                   <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
                 </a>
-                <h1 className="text-xl font-bold">Tạo tài khoản ChatRT</h1>
+                <h1 className="text-xl font-bold">Đăng nhập vào ChatRT</h1>
                 <p className="text-sm text-muted-foreground text-balance">
-                  Nhập thông tin của bạn để tạo tài khoản
+                  Nhập thông tin của bạn để đăng nhập
                 </p>
-              </div>
-
-              {/* Họ tên */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Đổi từ space-y-2 xuống space-y-1 (chỉ 4px) */}
-                <div className="space-y-1">
-                  <Label htmlFor="lastName" className="block text-sm">
-                    Họ
-                  </Label>
-                  <Input
-                    type="text"
-                    id="lastName"
-                    placeholder="Ví dụ: Trương"
-                    className="h-9"
-                    {...register("lastName")}
-                  />
-                  {errors.lastName && (
-                    <p className="text-sm text-destructive">
-                      {errors.lastName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="firstName" className="block text-sm">
-                    Tên
-                  </Label>
-                  <Input
-                    type="text"
-                    id="firstName"
-                    placeholder="Ví dụ: Nguyên"
-                    className="h-9"
-                    {...register("firstName")}
-                  />
-                  {errors.firstName && (
-                    <p className="text-sm text-destructive">
-                      {errors.firstName.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* Username */}
@@ -115,25 +80,6 @@ export function SignupForm({
                 {errors.username && (
                   <p className="text-sm text-destructive">
                     {errors.username.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1">
-                <Label htmlFor="email" className="block text-sm">
-                  Email
-                </Label>
-                <Input
-                  type="email"
-                  id="email"
-                  placeholder="nguyentruong@example.com"
-                  className="h-9"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">
-                    {errors.email.message}
                   </p>
                 )}
               </div>
@@ -157,22 +103,22 @@ export function SignupForm({
                 )}
               </div>
 
-              {/* Nút đăng ký */}
+              {/* Nút đăng nhập */}
               <Button
                 type="submit"
                 className="w-full mt-2 h-9"
                 disabled={isSubmitting}
               >
-                Tạo tài khoản
+                Đăng nhập
               </Button>
 
               <div className="text-center text-sm">
-                Đã có tài khoản?{" "}
+                Chưa có tài khoản?{" "}
                 <a
-                  href="/signin"
+                  href="/signup"
                   className="underline underline-offset-4 hover:text-primary"
                 >
-                  Đăng nhập
+                  Đăng ký
                 </a>
               </div>
             </div>
@@ -181,7 +127,7 @@ export function SignupForm({
           {/* Phần ảnh bên phải */}
           <div className="relative hidden bg-muted md:block">
             <img
-              src="/placeholderSignUp.png"
+              src="/placeholder.png"
               alt="Image"
               // Thêm h-full w-full để ảnh tự căn chỉnh lấp đầy thẻ Card khi form ngắn lại
               className="absolute top-1/2 -translate-y-1/2 object-cover h-full w-full"
