@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user });
     } catch (error) {
       console.error(error);
-      set({ user: null });
+      set({ user: null, accessToken: null });
       toast.error("Không thể lấy thông tin người dùng. Vui lòng thử lại.");
     } finally {
       set({ loading: false });
