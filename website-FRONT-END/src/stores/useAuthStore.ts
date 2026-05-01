@@ -33,6 +33,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const { accessToken } = await authService.signIn(username, password);
       set({ accessToken });
+
+      await get().fetchMe(); // Lấy thông tin người dùng sau khi đăng nhập thành công
+
       toast.success("Đăng nhập thành công! Chào mừng trở lại.");
     } catch (error) {
       console.error(error);
@@ -45,7 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     try {
       get().clearState();
-      
+
       // Gọi API để đăng xuất (xóa cookie trên server)
       await authService.signOut();
 
@@ -53,6 +56,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       console.error(error);
       toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+    }
+  },
+
+  fetchMe: async () => {
+    try {
+      set({ loading: true });
+      const user = await authService.fetchMe();
+      set({ user });
+    } catch (error) {
+      console.error(error);
+      set({ user: null });
+      toast.error("Không thể lấy thông tin người dùng. Vui lòng thử lại.");
+    } finally {
+      set({ loading: false });
     }
   },
 }));
