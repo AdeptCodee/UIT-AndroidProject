@@ -7,3 +7,7 @@ export const authMe = async (req, res) => {
     return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ!" });
   }
 };
+
+export const test = async () => {
+  return res.sendStatus(204);
+}
