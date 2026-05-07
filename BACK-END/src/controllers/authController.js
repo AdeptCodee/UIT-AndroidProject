@@ -4,7 +4,7 @@ import Session from "../models/Session.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const ACCESS_TOKEN_TTL = "30m"; // TTL: Time To Live - thời gian tồn tại của accessToken
+const ACCESS_TOKEN_TTL = "30s"; // TTL: Time To Live - thời gian tồn tại của accessToken
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // TTL: Time To Live - thời gian tồn tại của refreshToken
 
 export const signUp = async (req, res) => {
@@ -124,7 +124,7 @@ export const signOut = async (req, res) => {
 // Tạo accessToken mới từ refreshToken
 export const refreshToken = async (req, res) => {
   try {
-    // lấy refresh token từ cookie  
+    // lấy refresh token từ cookie
     const token = req.cookies?.refreshToken;
     if (!token) {
       return res.status(401).json({ message: "Token không tồn tại." });

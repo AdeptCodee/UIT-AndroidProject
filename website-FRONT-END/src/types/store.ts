@@ -5,6 +5,7 @@ export interface AuthState {
   user: USER | null; // Có thể định nghĩa kiểu cụ thể hơn nếu biết cấu trúc user
   loading: boolean;
 
+  setAccessToken: (accessToken: string) => void;
   clearState: () => void;
 
   signUp: (
