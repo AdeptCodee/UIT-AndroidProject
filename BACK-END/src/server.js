@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
 import { protectedRoute } from "./middlewares/authMiddleware.js";
 import cors from "cors";
+import friendRoute from "./routes/friendRoutes.js";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 5001;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({origin: process.env.CLIENT_URL, credentials: true})); // Cấu hình CORS để cho phép frontend truy cập với cookie
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true })); // Cấu hình CORS để cho phép frontend truy cập với cookie
 
 // Public routes
 app.use("/api/auth", authRoutes);
@@ -23,7 +24,7 @@ app.use("/api/auth", authRoutes);
 // Private routes
 app.use(protectedRoute); // Middleware để bảo vệ các route sau
 app.use("/api/users", userRoutes);
-
+app.use("/api/friends", friendRoute);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
