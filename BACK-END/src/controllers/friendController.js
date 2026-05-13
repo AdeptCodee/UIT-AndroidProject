@@ -145,8 +145,14 @@ export const getAllFriends = async (req, res) => {
       .populate("userB", "_id displayName avatarUrl")
       .lean();
     if (!friendships.length) {
-      return;
+      return res.status(200).json({ friends: [] });
     }
+
+    const friends = friendships.map((f) =>
+      f.userA._id.toString() === userId.toString() ? f.userB : f.userA,
+    );
+
+    return res.status(200).json({ friends });
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bạn bè!", error);
     return res.status(500).json({ message: "Lỗi hệ thống!" });
@@ -155,6 +161,16 @@ export const getAllFriends = async (req, res) => {
 
 export const getFriendRequests = async (req, res) => {
   try {
+    const userId = req.user._id;
+
+    const populateFields = "_id username displayName avatarUrl";
+
+    const [sent, received] = await Promise.all([
+      FriendRequest.find({from: userId}).populate("to", populateFields),
+      FriendRequest.find({to: userId}).populate("from", populateFields)
+    ]);
+
+    res.status(200).json({sent, received});
   } catch (error) {
     console.error("Lỗi khi lấy danh sách yêu cầu kết bạn!", error);
     return res.status(500).json({ message: "Lỗi hệ thống!" });
