@@ -1,6 +1,6 @@
 import { updateConversationAfterCreateMessage } from "../utils/messageHelper.js";
 import Conversation from "../models/Conversation.js";
-import MessageChannel from "../models/Message.js";
+import Message from "../models/Message.js";
 
 export const sendDirectMessage = async (req, res) => {
   try {
