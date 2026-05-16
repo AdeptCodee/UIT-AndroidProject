@@ -1,26 +1,21 @@
-import Logout from "@/components/auth/Logout";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { Button } from "@/components/ui/button";
-import api from "@/lib/axios";
-import { toast } from "sonner";
+import ChatWindowLayout from "@/components/chat/ChatWindowLayout";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+// THÊM DÒNG IMPORT NÀY
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const ChatAppPage = () => {
-  const user = useAuthStore((s) => s.user);
-  const handleOnClick = async () => {
-    try {
-      await api.get("/users/test", { withCredentials: true });
-      toast.success("ok");
-    } catch (error) {
-      toast.error("Error");
-      console.error(error);
-    }
-  };
   return (
-    <div>
-      {user?.displayName}
-      <Logout />
-      <Button onClick={handleOnClick}>test</Button>
-    </div>
+    /* BỌC THÊM THẺ TOOLTIP PROVIDER Ở NGOÀI CÙNG */
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar />
+
+        <div className="flex h-screen w-full p-2">
+          <ChatWindowLayout />
+        </div>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 };
 

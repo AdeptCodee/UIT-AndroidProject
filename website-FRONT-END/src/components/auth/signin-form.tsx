@@ -40,8 +40,13 @@ export function SignInForm({
     const { username, password } = data;
 
     // Gọi backend API để đăng nhập
-    await signIn(username, password);
-    navigate("/"); // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
+    const result = await signIn(username, password);
+    
+    // Kiểm tra xem đăng nhập có thành công hay không bằng cách kiểm tra accessToken
+    const { accessToken } = useAuthStore.getState();
+    if (accessToken) {
+      navigate("/"); // Chỉ chuyển hướng nếu đăng nhập thành công
+    }
   };
 
   return (
