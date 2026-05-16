@@ -62,16 +62,17 @@ export const checkGroupMembership = async (req, res, next) => {
     }
 
     const isMember = conversation.participants.some((p) => p.userId.toString());
-    
-    if(!isMember) {
-      return res.status(403).json({message:"Bạn không ở trong nhóm chat này"});
+
+    if (!isMember) {
+      return res
+        .status(403)
+        .json({ message: "Bạn không ở trong nhóm chat này" });
     }
 
     req.conversation = conversation;
     next();
-
   } catch (error) {
-    console.error("Lỗi checkGroupMembership",error);
-    return res.status(500).json({message:"Lỗi hệ thống"})
+    console.error("Lỗi checkGroupMembership", error);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
