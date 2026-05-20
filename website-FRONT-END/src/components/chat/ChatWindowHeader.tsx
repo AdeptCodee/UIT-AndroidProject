@@ -6,10 +6,13 @@ import { Separator } from "../ui/separator";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
+import { useSocketStore } from "@/stores/useSocketStore";
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
   const { conversations, activeConversationId } = useChatStore();
   const { user } = useAuthStore();
+  const { onlineUsers } = useSocketStore();
+
   let otherUser;
   chat = chat ?? conversations.find((c) => c._id === activeConversationId);
 
@@ -46,7 +49,13 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                   avatarUrl={otherUser?.avatarUrl || undefined}
                 />
                 {/* socket io */}
-                <StatusBadge status="offline" />
+                <StatusBadge
+                  status={
+                    onlineUsers.includes(otherUser?._id ?? "")
+                      ? "online"
+                      : "offline"
+                  }
+                />
               </div>
             ) : (
               <GroupChatAvatar
@@ -55,12 +64,10 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
               />
             )}
           </div>
-            {/* name */}
-            <h2 className="font-semibold text-foreground">
-                {
-                    chat.type === "direct" ? otherUser?.displayName : chat.group?.name
-                }
-            </h2>
+          {/* name */}
+          <h2 className="font-semibold text-foreground">
+            {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
+          </h2>
         </div>
       </div>
     </header>

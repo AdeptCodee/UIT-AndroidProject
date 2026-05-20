@@ -1,3 +1,4 @@
+import type { Socket } from "socket.io-client";
 import type { Conversation, Message } from "./chat";
 import type { USER } from "./user";
 
@@ -49,4 +50,27 @@ export interface ChatState {
   setActiveConversation: (id: string | null) => void;
   fetchConversations: () => Promise<void>;
   fetchMessages: (conversationId?: string) => Promise<void>;
+  sendDirectMessage: (
+    recipientId: string,
+    content: string,
+    imgUrl?: string,
+
+  ) => Promise<void>;
+  sendGroupMessage: (
+    conversationId: string,
+    content: string,
+    imgUrl?: string,
+  ) => Promise<void>;
+
+  // add message
+  addMessage: (message: Message) => Promise<void>;
+  // update message
+  updateConversation: (conversation: Conversation) => void;
+}
+
+export interface SocketState {
+  socket: Socket | null;
+  onlineUsers: string[]; // danh sách userId đang online
+  connectSocket: () => void;
+  disconnectSocket: () => void;
 }

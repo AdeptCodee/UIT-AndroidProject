@@ -8,11 +8,12 @@ import { protectedRoute } from "./middlewares/authMiddleware.js";
 import cors from "cors";
 import friendRoute from "./routes/friendRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
-import conversationRoutes from "./routes/conversationRoutes.js"
+import conversationRoutes from "./routes/conversationRoutes.js";
+import { app, server } from "./socket/index.js";
 
 dotenv.config();
 
-const app = express();
+// const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
@@ -31,7 +32,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/conversations", conversationRoutes);
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server đang chạy trên cổng ${PORT}`);
   });
 });
