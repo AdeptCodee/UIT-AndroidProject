@@ -115,7 +115,7 @@ export const signOut = async (req, res) => {
       res.clearCookie("refreshToken");
     }
 
-    return res.sendStatus(204).json({ message: "Đăng xuất thành công!" });
+    return res.status(200).json({ message: "Đăng xuất thành công!" });
   } catch (error) {
     console.error("Đã xảy ra lỗi khi gọi hàm đăng xuất người dùng.", error);
     return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ!" });
