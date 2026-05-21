@@ -29,7 +29,7 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const {signUp} = useAuthStore();
+  const { signUp } = useAuthStore();
   const navigate = useNavigate();
   const {
     register,
@@ -83,9 +83,7 @@ export function SignupForm({
                     {...register("lastName")}
                   />
                   {errors.lastName && (
-                    <p className="text-sm text-destructive">
-                      {errors.lastName.message}
-                    </p>
+                    <p className="error-message">{errors.lastName.message}</p>
                   )}
                 </div>
 
@@ -101,9 +99,7 @@ export function SignupForm({
                     {...register("firstName")}
                   />
                   {errors.firstName && (
-                    <p className="text-sm text-destructive">
-                      {errors.firstName.message}
-                    </p>
+                    <p className="error-message">{errors.firstName.message}</p>
                   )}
                 </div>
               </div>
@@ -122,9 +118,7 @@ export function SignupForm({
                   {...register("username")}
                 />
                 {errors.username && (
-                  <p className="text-sm text-destructive">
-                    {errors.username.message}
-                  </p>
+                  <p className="error-message">{errors.username.message}</p>
                 )}
               </div>
 
@@ -141,9 +135,7 @@ export function SignupForm({
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-sm text-destructive">
-                    {errors.email.message}
-                  </p>
+                  <p className="error-message">{errors.email.message}</p>
                 )}
               </div>
 
@@ -160,9 +152,7 @@ export function SignupForm({
                   {...register("password")}
                 />
                 {errors.password && (
-                  <p className="text-sm text-destructive">
-                    {errors.password.message}
-                  </p>
+                  <p className="error-message">{errors.password.message}</p>
                 )}
               </div>
 

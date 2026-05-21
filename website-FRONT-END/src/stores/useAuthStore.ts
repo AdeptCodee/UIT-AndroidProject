@@ -15,18 +15,20 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (accessToken) => {
         set({ accessToken });
       },
-
+      setUser: (user) => {
+        set({ user });
+      },
       clearState: () => {
         set({ accessToken: null, user: null, loading: false });
-        localStorage.clear();
         useChatStore.getState().reset();
+        localStorage.clear();
+        sessionStorage.clear();
       },
-
       signUp: async (username, password, email, firstName, lastName) => {
         try {
           set({ loading: true });
 
-          // Gọi backend API để đăng ký
+          //  gọi api
           await authService.signUp(
             username,
             password,
@@ -34,69 +36,66 @@ export const useAuthStore = create<AuthState>()(
             firstName,
             lastName,
           );
-          toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+
+          toast.success(
+            "Đăng ký thành công! Bạn sẽ được chuyển sang trang đăng nhập.",
+          );
         } catch (error) {
           console.error(error);
-          toast.error("Đăng ký thất bại. Vui lòng thử lại.");
+          toast.error("Đăng ký failed");
         } finally {
           set({ loading: false });
         }
       },
-
       signIn: async (username, password) => {
         try {
+          get().clearState();
           set({ loading: true });
-
-          localStorage.clear();
-          useChatStore.getState().reset();
 
           const { accessToken } = await authService.signIn(username, password);
           get().setAccessToken(accessToken);
-          await get().fetchMe(); // Lấy thông tin người dùng sau khi đăng nhập thành công
+
+          await get().fetchMe();
           useChatStore.getState().fetchConversations();
 
-          toast.success("Đăng nhập thành công! Chào mừng trở lại.");
+          toast.success("Chào mừng quay lại với ChatRT Project");
         } catch (error) {
           console.error(error);
-          toast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+          toast.error("Đăng nhập failed!");
         } finally {
           set({ loading: false });
         }
       },
-
       signOut: async () => {
         try {
           get().clearState();
-
-          // Gọi API để đăng xuất (xóa cookie trên server)
           await authService.signOut();
-
-          toast.success("Đăng xuất thành công!");
+          toast.success("Logout thành công!");
         } catch (error) {
           console.error(error);
-          toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+          toast.error("Lỗi xảy ra khi logout. Hãy thử lại!");
         }
       },
-
       fetchMe: async () => {
         try {
           set({ loading: true });
           const user = await authService.fetchMe();
+
           set({ user });
         } catch (error) {
           console.error(error);
           set({ user: null, accessToken: null });
-          toast.error("Không thể lấy thông tin người dùng. Vui lòng thử lại.");
+          toast.error("Lỗi xảy ra khi lấy dữ liệu người dùng. Hãy thử lại!");
         } finally {
           set({ loading: false });
         }
       },
-
       refresh: async () => {
         try {
           set({ loading: true });
           const { user, fetchMe, setAccessToken } = get();
           const accessToken = await authService.refresh();
+
           setAccessToken(accessToken);
 
           if (!user) {
@@ -104,7 +103,7 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error(error);
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
           get().clearState();
         } finally {
           set({ loading: false });
@@ -113,7 +112,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ user: state.user }), //chỉ persist user
+      partialize: (state) => ({ user: state.user }), // chỉ persist user
     },
   ),
 );

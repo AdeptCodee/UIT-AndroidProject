@@ -1,15 +1,15 @@
 import type { Socket } from "socket.io-client";
 import type { Conversation, Message } from "./chat";
-import type { USER } from "./user";
+import type { Friend, FriendRequest, USER } from "./user";
 
 export interface AuthState {
   accessToken: string | null;
-  user: USER | null; // Có thể định nghĩa kiểu cụ thể hơn nếu biết cấu trúc user
+  user: USER | null;
   loading: boolean;
 
   setAccessToken: (accessToken: string) => void;
+  setUser: (user: USER) => void;
   clearState: () => void;
-
   signUp: (
     username: string,
     password: string,
@@ -17,15 +17,12 @@ export interface AuthState {
     firstName: string,
     lastName: string,
   ) => Promise<void>;
-
   signIn: (username: string, password: string) => Promise<void>;
-
   signOut: () => Promise<void>;
-
   fetchMe: () => Promise<void>;
-
   refresh: () => Promise<void>;
 }
+
 export interface ThemeState {
   isDark: boolean;
   toggleTheme: () => void;
@@ -38,13 +35,14 @@ export interface ChatState {
     string,
     {
       items: Message[];
-      hasMore: boolean; //infinite scroll
+      hasMore: boolean; // infinite-scroll
       nextCursor?: string | null; // phân trang
     }
   >;
   activeConversationId: string | null;
   convoLoading: boolean;
   messageLoading: boolean;
+  loading: boolean;
   reset: () => void;
 
   setActiveConversation: (id: string | null) => void;
@@ -54,23 +52,45 @@ export interface ChatState {
     recipientId: string,
     content: string,
     imgUrl?: string,
-
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
     imgUrl?: string,
   ) => Promise<void>;
-
   // add message
   addMessage: (message: Message) => Promise<void>;
-  // update message
-  updateConversation: (conversation: Conversation) => void;
+  // update convo
+  updateConversation: (conversation: unknown) => void;
+  markAsSeen: () => Promise<void>;
+  addConvo: (convo: Conversation) => void;
+  createConversation: (
+    type: "group" | "direct",
+    name: string,
+    memberIds: string[],
+  ) => Promise<void>;
 }
 
 export interface SocketState {
   socket: Socket | null;
-  onlineUsers: string[]; // danh sách userId đang online
+  onlineUsers: string[];
   connectSocket: () => void;
   disconnectSocket: () => void;
+}
+
+export interface FriendState {
+  friends: Friend[];
+  loading: boolean;
+  receivedList: FriendRequest[];
+  sentList: FriendRequest[];
+  searchByUsername: (username: string) => Promise<USER | null>;
+  addFriend: (to: string, message?: string) => Promise<string>;
+  getAllFriendRequests: () => Promise<void>;
+  acceptRequest: (requestId: string) => Promise<void>;
+  declineRequest: (requestId: string) => Promise<void>;
+  getFriends: () => Promise<void>;
+}
+
+export interface UserState {
+  updateAvatarUrl: (formData: FormData) => Promise<void>;
 }

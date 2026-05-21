@@ -13,21 +13,20 @@ export const chatService = {
     const res = await api.get("/conversations");
     return res.data;
   },
+
   async fetchMessages(id: string, cursor?: string): Promise<FetchMessageProps> {
     const res = await api.get(
-      `/conversations/${id}/messages?limit=${pageLimit}&cursor=${cursor}`,
+      `/conversations/${id}/messages?limit=${pageLimit}&cursor=${cursor}`
     );
-    return {
-      messages: res.data.messages,
-      cursor: res.data.nextCursor,
-    };
+
+    return { messages: res.data.messages, cursor: res.data.nextCursor };
   },
 
   async sendDirectMessage(
     recipientId: string,
     content: string = "",
     imgUrl?: string,
-    conversationId?: string,
+    conversationId?: string
   ) {
     const res = await api.post("/messages/direct", {
       recipientId,
@@ -35,13 +34,14 @@ export const chatService = {
       imgUrl,
       conversationId,
     });
+
     return res.data.message;
   },
 
   async sendGroupMessage(
     conversationId: string,
     content: string = "",
-    imgUrl?: string,
+    imgUrl?: string
   ) {
     const res = await api.post("/messages/group", {
       conversationId,
@@ -49,5 +49,19 @@ export const chatService = {
       imgUrl,
     });
     return res.data.message;
+  },
+
+  async markAsSeen(conversationId: string) {
+    const res = await api.patch(`/conversations/${conversationId}/seen`);
+    return res.data;
+  },
+
+  async createConversation(
+    type: "direct" | "group",
+    name: string,
+    memberIds: string[]
+  ) {
+    const res = await api.post("/conversations", { type, name, memberIds });
+    return res.data.conversation;
   },
 };
