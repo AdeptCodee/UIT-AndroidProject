@@ -56,7 +56,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     if (!value.trim() && !selectedImage) return;
 
     const currValue = value;
-    const currImage = selectedImage;
+    const currImage = selectedImage || undefined;
     setValue("");
     clearImage();
 
