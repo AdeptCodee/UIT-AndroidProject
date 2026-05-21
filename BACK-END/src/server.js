@@ -1,38 +1,55 @@
 import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "./libs/db.js";
-import authRoutes from "./routes/authRoutes.js";
+import authRoute from "./routes/authRoutes.js";
+import userRoute from "./routes/userRoutes.js";
+import friendRoute from "./routes/friendRoutes.js";
+import messageRoute from "./routes/messageRoutes.js";
+import conversationRoute from "./routes/conversationRoutes.js";
 import cookieParser from "cookie-parser";
-import userRoutes from "./routes/userRoutes.js";
 import { protectedRoute } from "./middlewares/authMiddleware.js";
 import cors from "cors";
-import friendRoute from "./routes/friendRoutes.js";
-import messageRoutes from "./routes/messageRoutes.js";
-import conversationRoutes from "./routes/conversationRoutes.js";
+import swaggerUi from "swagger-ui-express";
+import fs from "fs";
 import { app, server } from "./socket/index.js";
+import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
 
 // const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Middleware
+// middlewares
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true })); // Cấu hình CORS để cho phép frontend truy cập với cookie
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
-// Public routes
-app.use("/api/auth", authRoutes);
+// CLOUDINARY Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Private routes
-app.use(protectedRoute); // Middleware để bảo vệ các route sau
-app.use("/api/users", userRoutes);
+// swagger
+const swaggerDocument = JSON.parse(
+  fs.readFileSync("./src/swagger.json", "utf8"),
+);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// public routes
+app.use("/api/auth", authRoute);
+
+// private routes
+app.use(protectedRoute);
+app.use("/api/users", userRoute);
 app.use("/api/friends", friendRoute);
-app.use("/api/messages", messageRoutes);
-app.use("/api/conversations", conversationRoutes);
+app.use("/api/messages", messageRoute);
+app.use("/api/conversations", conversationRoute);
 
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log(`Server đang chạy trên cổng ${PORT}`);
+    console.log(`server bắt đầu trên cổng ${PORT}`);
   });
 });

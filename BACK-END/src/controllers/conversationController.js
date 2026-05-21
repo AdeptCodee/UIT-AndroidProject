@@ -116,8 +116,8 @@ export const getConversations = async (req, res) => {
         select: "displayName avatarUrl",
       });
 
-    const formatted = conversations.map((convo) => {
-      const participants = (convo.participants || []).map((p) => ({
+    const formatted = conversations.map((c) => {
+      const participants = (c.participants || []).map((p) => ({
         _id: p.userId?._id,
         displayName: p.userId?.displayName,
         avatarUrl: p.userId?.avatarUrl ?? null,
@@ -125,8 +125,8 @@ export const getConversations = async (req, res) => {
       }));
 
       return {
-        ...convo.toObject(),
-        unreadCounts: convo.unreadCounts || {},
+        ...c.toObject(),
+        unreadCounts: c.unreadCounts || {},
         participants,
       };
     });
@@ -235,7 +235,7 @@ export const markAsSeen = async (req, res) => {
 
     return res.status(200).json({
       message: "Marked as seen",
-      seenBy: updated?.sennBy || [],
+      seenBy: updated?.seenBy || [],
       myUnreadCount: updated?.unreadCounts[userId] || 0,
     });
   } catch (error) {

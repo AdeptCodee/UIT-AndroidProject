@@ -33,21 +33,38 @@ const FriendRequestDialog = ({ open, setOpen }: FriendRequestDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Lời mời kết bạn</DialogTitle>
+      {/* ĐÃ SỬA: Thêm bo góc lớn (rounded-2xl) và bỏ viền (border-0) cho hộp thoại */}
+      <DialogContent className="sm:max-w-md rounded-2xl border-0 p-6 shadow-2xl">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl font-bold">
+            Lời mời kết bạn
+          </DialogTitle>
         </DialogHeader>
+
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="received">Đã nhận</TabsTrigger>
-            <TabsTrigger value="sent">Đã gửi</TabsTrigger>
+          {/* ĐÃ SỬA: Làm thanh bọc bên ngoài bo tròn dạng viên thuốc (rounded-full) */}
+          <TabsList className="grid w-full grid-cols-2 bg-muted p-1 rounded-full h-12 mb-2">
+            {/* ĐÃ SỬA: Định dạng lại nút Tab, khi được chọn (active) sẽ có viền tím, nền trắng và bo tròn */}
+            <TabsTrigger
+              value="received"
+              className="rounded-full font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-2 data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+            >
+              Đã nhận
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="sent"
+              className="rounded-full font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-2 data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+            >
+              Đã gửi
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="received">
+          <TabsContent value="received" className="mt-0 outline-none border-0">
             <ReceivedRequests />
           </TabsContent>
 
-          <TabsContent value="sent">
+          <TabsContent value="sent" className="mt-0 outline-none border-0">
             <SentRequests />
           </TabsContent>
         </Tabs>

@@ -228,7 +228,7 @@ export const useChatStore = create<ChatState>()(
             .socket?.emit("join-conversation", conversation._id);
         } catch (error) {
           console.error(
-            "Lỗi xảy ra khi gọi createConversation trong store",
+            "Lỗi xảy ra khi gọi createConversation trong useChatStore",
             error,
           );
         } finally {
