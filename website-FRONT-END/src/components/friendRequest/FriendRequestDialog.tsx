@@ -41,7 +41,11 @@ const FriendRequestDialog = ({ open, setOpen }: FriendRequestDialogProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <Tabs
+          value={tab}
+          onValueChange={setTab}
+          className="w-full flex flex-col"
+        >
           {/* ĐÃ SỬA: Làm thanh bọc bên ngoài bo tròn dạng viên thuốc (rounded-full) */}
           <TabsList className="grid w-full grid-cols-2 bg-muted p-1 rounded-full h-12 mb-2">
             {/* ĐÃ SỬA: Định dạng lại nút Tab, khi được chọn (active) sẽ có viền tím, nền trắng và bo tròn */}
