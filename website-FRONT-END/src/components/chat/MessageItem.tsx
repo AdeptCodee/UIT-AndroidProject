@@ -54,7 +54,7 @@ const MessageItem = ({
             {isGroupBreak && (
               <UserAvatar
                 type="chat"
-                name={participant?.displayName ?? "Moji"}
+                name={participant?.displayName ?? "ChatRT"}
                 avatarUrl={participant?.avatarUrl ?? undefined}
               />
             )}
@@ -68,18 +68,32 @@ const MessageItem = ({
             message.isOwn ? "items-end" : "items-start",
           )}
         >
-          <Card
-            className={cn(
-              "p-3",
-              message.isOwn
-                ? "chat-bubble-sent border-0"
-                : "chat-bubble-received",
-            )}
-          >
-            <p className="text-sm leading-relaxed break-words">
-              {message.content}
-            </p>
-          </Card>
+          {/* Image */}
+          {message.imgUrl && (
+            <div className="rounded-lg overflow-hidden border border-border/50">
+              <img
+                src={message.imgUrl}
+                alt="message-image"
+                className="max-w-xs lg:max-w-md h-auto max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              />
+            </div>
+          )}
+
+          {/* Text Content */}
+          {message.content && (
+            <Card
+              className={cn(
+                "p-3",
+                message.isOwn
+                  ? "chat-bubble-sent border-0"
+                  : "chat-bubble-received",
+              )}
+            >
+              <p className="text-sm leading-relaxed break-words">
+                {message.content}
+              </p>
+            </Card>
+          )}
 
           {/* seen/ delivered */}
           {message.isOwn && message._id === selectedConvo.lastMessage?._id && (

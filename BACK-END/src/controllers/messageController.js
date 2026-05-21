@@ -4,18 +4,26 @@ import {
 } from "../utils/messageHelper.js";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
-import {io} from "../socket/index.js"
+import { uploadMessageImage } from "../middlewares/uploadMiddleware.js";
+import { io } from "../socket/index.js";
 
 export const sendDirectMessage = async (req, res) => {
   try {
     const { recipientId, content, conversationId } = req.body;
     const senderId = req.user._id;
+    const file = req.file;
 
-    let conversation;
-    if (!content) {
+    if (!content && !file) {
       return res.status(400).json({ message: "Thiếu nội dung!" });
     }
 
+    let imgUrl;
+    if (file) {
+      const uploadResult = await uploadMessageImage(file.buffer);
+      imgUrl = uploadResult.secure_url;
+    }
+
+    let conversation;
     if (conversationId) {
       conversation = await Conversation.findById(conversationId);
     }
@@ -31,10 +39,12 @@ export const sendDirectMessage = async (req, res) => {
         unreadCounts: new Map(),
       });
     }
+
     const message = await Message.create({
       conversationId: conversation._id,
       senderId,
-      content,
+      content: content || "",
+      imgUrl,
     });
 
     updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -55,14 +65,23 @@ export const sendGroupMessage = async (req, res) => {
     const { conversationId, content } = req.body;
     const senderId = req.user._id;
     const conversation = req.conversation;
+    const file = req.file;
 
-    if (!content) {
-      return res.status(400).json("Thiếu nội dung");
+    if (!content && !file) {
+      return res.status(400).json({ message: "Thiếu nội dung hoặc hình ảnh!" });
     }
+
+    let imgUrl;
+    if (file) {
+      const uploadResult = await uploadMessageImage(file.buffer);
+      imgUrl = uploadResult.secure_url;
+    }
+
     const message = await Message.create({
       conversationId,
       senderId,
-      content,
+      content: content || "",
+      imgUrl,
     });
 
     updateConversationAfterCreateMessage(conversation, message, senderId);
