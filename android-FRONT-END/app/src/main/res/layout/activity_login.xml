@@ -88,6 +88,14 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:visibility="gone"
+            android:indeterminate="true" />
+
         <TextView
             android:id="@+id/txtGoToSignUp"
             android:layout_width="match_parent"
