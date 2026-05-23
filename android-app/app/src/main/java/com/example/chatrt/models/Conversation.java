@@ -34,13 +34,22 @@ public class Conversation {
     // --- Các Class phụ bên trong (Nested Classes) ---
 
     public static class Participant {
-        @SerializedName("userId")
-        private String userId;
+        @SerializedName("_id")
+        private String id; // Đây là ID người dùng
+
+        @SerializedName("displayName")
+        private String displayName;
+
+        @SerializedName("avatarUrl")
+        private String avatarUrl;
 
         @SerializedName("joinedAt")
         private String joinedAt;
 
-        public String getUserId() { return userId; }
+        // Getters
+        public String getId() { return id; }
+        public String getDisplayName() { return displayName; }
+        public String getAvatarUrl() { return avatarUrl; }
     }
 
     public static class GroupInfo {
@@ -54,16 +63,31 @@ public class Conversation {
     }
 
     public static class LastMessage {
+        @SerializedName("_id")
+        private String id;
+
         @SerializedName("content")
         private String content;
 
+        // THAY ĐỔI: senderId bây giờ là một Object User thu nhỏ, không phải String
         @SerializedName("senderId")
-        private String senderId;
+        private SenderInfo sender;
 
         @SerializedName("createdAt")
         private String createdAt;
 
         public String getContent() { return content; }
+
+        public static class SenderInfo {
+            @SerializedName("_id")
+            private String id;
+            @SerializedName("displayName")
+            private String displayName;
+            @SerializedName("avatarUrl")
+            private String avatarUrl;
+
+            public String getDisplayName() { return displayName; }
+        }
     }
 
     // --- Các hàm Getter và Setter chính ---

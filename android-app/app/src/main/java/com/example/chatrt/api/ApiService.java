@@ -31,8 +31,9 @@ public interface ApiService {
     // ==========================================
     // 2. CHAT SERVICE (Thay thế chatService.ts)
     // ==========================================
+    // Sửa lại dòng này
     @GET("conversations")
-    Call<List<Conversation>> getConversations();
+    Call<ConversationsResponse> getConversations();
 
     @GET("conversations/{id}/messages")
     Call<MessagesResponse> getMessages(

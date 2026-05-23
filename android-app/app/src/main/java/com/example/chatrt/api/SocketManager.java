@@ -17,7 +17,8 @@ import io.socket.client.Socket;
  */
 public class SocketManager {
     private static final String TAG = "SocketManager";
-    private static final String SOCKET_URL = "http://10.0.2.2:5001"; // Cổng 5001 của Backend
+    // Đã cập nhật sang URL Socket trên Render
+    private static final String SOCKET_URL = "https://uit-androidproject-backend.onrender.com";
 
     private static SocketManager instance;
     private Socket mSocket;
@@ -47,37 +48,28 @@ public class SocketManager {
 
             mSocket = IO.socket(SOCKET_URL, opts);
 
-            // Lắng nghe sự kiện kết nối
             mSocket.on(Socket.EVENT_CONNECT, args -> Log.d(TAG, "Đã kết nối Socket thành công!"));
 
-            // 1. Lắng nghe danh sách người dùng online (online-users)
             mSocket.on("online-users", args -> {
                 Log.d(TAG, "Danh sách online: " + args[0].toString());
-                // TODO: Cập nhật UI danh sách online
             });
 
-            // 2. Lắng nghe tin nhắn mới (new-message)
             mSocket.on("new-message", args -> {
                 try {
                     JSONObject data = (JSONObject) args[0];
-                    // Chuyển từ JSON của Socket sang Model Java bằng Gson
                     Message message = gson.fromJson(data.getJSONObject("message").toString(), Message.class);
                     Conversation conversation = gson.fromJson(data.getJSONObject("conversation").toString(), Conversation.class);
 
                     Log.d(TAG, "Có tin nhắn mới: " + message.getContent());
-                    // TODO: Gửi tin nhắn này lên màn hình Chat
                 } catch (Exception e) {
                     Log.e(TAG, "Lỗi xử lý new-message: " + e.getMessage());
                 }
             });
 
-            // 3. Lắng nghe khi có nhóm chat mới (new-group)
             mSocket.on("new-group", args -> {
                 try {
                     JSONObject convoJson = (JSONObject) args[0];
                     Conversation conversation = gson.fromJson(convoJson.toString(), Conversation.class);
-
-                    // Tự động tham gia vào phòng chat mới này (giống emit('join-conversation') bên Web)
                     mSocket.emit("join-conversation", conversation.getId());
                 } catch (Exception e) {
                     Log.e(TAG, "Lỗi xử lý new-group: " + e.getMessage());
@@ -101,7 +93,6 @@ public class SocketManager {
         }
     }
 
-    // Gửi sự kiện lên Server
     public void emit(String event, Object data) {
         if (mSocket != null && mSocket.connected()) {
             mSocket.emit(event, data);

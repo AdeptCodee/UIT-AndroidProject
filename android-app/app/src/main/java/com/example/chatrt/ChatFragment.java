@@ -18,6 +18,7 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.example.chatrt.models.ConversationsResponse;
 
 public class ChatFragment extends Fragment {
 
@@ -57,17 +58,25 @@ public class ChatFragment extends Fragment {
     }
 
     private void fetchConversations() {
+        if (getContext() == null) return;
+
         ApiService apiService = ApiClient.getClient(getContext()).create(ApiService.class);
-        apiService.getConversations().enqueue(new Callback<List<Conversation>>() {
+        apiService.getConversations().enqueue(new Callback<ConversationsResponse>() {
             @Override
-            public void onResponse(Call<List<Conversation>> call, Response<List<Conversation>> response) {
-                if (response.isSuccessful() && response.body() != null) {
+            public void onResponse(Call<ConversationsResponse> call, Response<ConversationsResponse> response) {
+                // Kiểm tra xem Fragment còn sống không trước khi cập nhật UI
+                if (!isAdded() || getContext() == null) return;
+
+                if (response.isSuccessful() && response.body() != null && response.body().getConversations() != null) {
                     groupList.clear();
                     directList.clear();
 
-                    for (Conversation c : response.body()) {
-                        if (c.getType().equals("group")) groupList.add(c);
-                        else directList.add(c);
+                    for (Conversation c : response.body().getConversations()) {
+                        if ("group".equals(c.getType())) {
+                            groupList.add(c);
+                        } else {
+                            directList.add(c);
+                        }
                     }
 
                     groupAdapter.notifyDataSetChanged();
@@ -76,11 +85,16 @@ public class ChatFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<List<Conversation>> call, Throwable t) {
-                Toast.makeText(getContext(), "Lỗi tải hội thoại", Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<ConversationsResponse> call, Throwable t) {
+                if (isAdded() && getContext() != null) {
+                    // Log lỗi thật ra để bạn xem trong Logcat (Tab Filter: ChatFragment)
+                    android.util.Log.e("ChatFragment", "Lỗi Parsing: " + t.getMessage());
+                    Toast.makeText(getContext(), "Dữ liệu không khớp hoặc lỗi mạng", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
+
 
     private void openChat(Conversation conversation) {
         // Sau này sẽ mở ChatActivity tại đây

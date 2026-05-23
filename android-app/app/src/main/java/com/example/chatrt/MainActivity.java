@@ -2,10 +2,20 @@ package com.example.chatrt;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+
+import com.example.chatrt.api.ApiClient;
+import com.example.chatrt.api.ApiService;
 import com.example.chatrt.api.TokenManager;
+import com.example.chatrt.models.User;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,13 +27,19 @@ public class MainActivity extends AppCompatActivity {
 
         tokenManager = new TokenManager(this);
 
+        // 1. Kiểm tra Token xem đã đăng nhập chưa
         if (tokenManager.getAccessToken() == null) {
             goToLogin();
             return;
         }
 
+        // 2. Nếu đã đăng nhập -> Hiển thị giao diện chính
         setContentView(R.layout.activity_main);
 
+        // 3. Lấy thông tin cá nhân của mình để lưu ID (Rất quan trọng cho Chat)
+        fetchMyInfo();
+
+        // 4. Cấu hình thanh điều hướng dưới cùng
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         // Mặc định khi mở App sẽ vào tab Chat (số 3)
@@ -54,6 +70,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void fetchMyInfo() {
+        // Sử dụng ApiClient và ApiService CHÍNH XÁC của dự án chúng ta
+        ApiService apiService = ApiClient.getClient(this).create(ApiService.class);
+        apiService.fetchMe().enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Lưu ID của mình vào TokenManager để các màn hình khác dùng để lọc "người kia"
+                    tokenManager.saveUserId(response.body().getId());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                // Nếu lỗi thì thôi, sẽ thử lại sau
+            }
+        });
+    }
+
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
@@ -67,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void goToLogin() {
-        startActivity(new Intent(this, LoginActivity.class));
+        startActivity(new Intent(MainActivity.this, LoginActivity.class));
         finish();
     }
 }

@@ -36,13 +36,34 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Conversation convo = conversations.get(position);
 
-        // Tạm thời hiển thị tên ID nếu là chat nhóm, hoặc xử lý lấy tên người kia nếu chat đơn
+        // LẤY MY_ID TỪ TOKEN_MANAGER ĐỂ BIẾT AI LÀ "NGƯỜI KIA"
+        com.example.chatrt.api.TokenManager tokenManager = new com.example.chatrt.api.TokenManager(holder.itemView.getContext());
+        String myId = tokenManager.getUserId();
+
         if (convo.getType().equals("group")) {
             holder.tvName.setText(convo.getGroup() != null ? convo.getGroup().getName() : "Nhóm không tên");
         } else {
-            holder.tvName.setText("Cuộc hội thoại cá nhân"); // Sẽ xử lý lấy tên bạn bè ở bước sau
+            // Tìm người kia trong danh sách participants
+            if (convo.getParticipants() != null) {
+                for (Conversation.Participant p : convo.getParticipants()) {
+                    // Nếu ID của participant khác với ID của mình, thì đó là người mình đang chat cùng
+                    if (!p.getId().equals(myId)) {
+                        holder.tvName.setText(p.getDisplayName());
+
+                        // Load ảnh đại diện
+                        if (p.getAvatarUrl() != null) {
+                            Glide.with(holder.itemView.getContext())
+                                    .load(p.getAvatarUrl())
+                                    .placeholder(R.drawable.edit_text_bg) // Ảnh tạm trong lúc chờ tải
+                                    .into(holder.ivAvatar);
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
+        // Hiển thị tin nhắn cuối cùng
         if (convo.getLastMessage() != null) {
             holder.tvLastMsg.setText(convo.getLastMessage().getContent());
         } else {

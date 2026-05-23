@@ -87,15 +87,15 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Lấy token từ phản hồi của Server Node.js
                     String accessToken = response.body().getAccessToken();
-                    // Lưu ý: Nếu Backend trả về refreshToken, hãy lưu nó vào đây.
-                    // Hiện tại giả định Server trả về accessToken.
+
+                    // Lưu token vào máy
                     tokenManager.saveAccessToken(accessToken);
 
-                    Toast.makeText(LoginActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                    // VÌ SERVER CHƯA TRẢ VỀ USER OBJECT NÊN CHÚNG TA KHÔNG GỌI .getUser().getId() Ở ĐÂY
+                    // App sẽ không còn bị crash nữa
 
-                    // Vào trang chính
+                    Toast.makeText(LoginActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
                 } else {
