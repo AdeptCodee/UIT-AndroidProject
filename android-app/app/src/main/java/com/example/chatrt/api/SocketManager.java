@@ -46,6 +46,7 @@ public class SocketManager {
         if (mSocket != null && mSocket.connected()) return;
 
         try {
+            Log.d(TAG, "Đang kết nối Socket...");
             IO.Options opts = new IO.Options();
             opts.auth = Collections.singletonMap("token", tokenManager.getAccessToken());
             opts.transports = new String[]{"websocket"};
@@ -54,6 +55,8 @@ public class SocketManager {
             mSocket = IO.socket(SOCKET_URL, opts);
 
             mSocket.on(Socket.EVENT_CONNECT, args -> Log.d(TAG, "Socket Connected!"));
+            
+            mSocket.on(Socket.EVENT_DISCONNECT, args -> Log.d(TAG, "Socket Disconnected!"));
 
             // Cập nhật trạng thái online
             mSocket.on("online-users", args -> {
@@ -93,9 +96,13 @@ public class SocketManager {
 
     public void disconnect() {
         if (mSocket != null) {
+            Log.d(TAG, "Thực hiện ngắt kết nối Socket...");
+            mSocket.off(); 
             mSocket.disconnect();
+            mSocket.close();
             mSocket = null;
             onlineUserIds.clear();
+            Log.d(TAG, "Socket đã được giải phóng.");
         }
     }
 

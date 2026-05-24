@@ -4,11 +4,7 @@ plugins {
 
 android {
     namespace = "com.example.chatrt"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.chatrt"
@@ -59,6 +55,9 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
-    // 4. CircleImageView (Sửa lỗi civ_border_width mà bạn đang gặp)
+    // 4. CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
+
+    // 5. Flexbox Layout (Cho danh sách thành viên được chọn)
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 }

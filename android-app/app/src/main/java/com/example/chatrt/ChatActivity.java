@@ -202,9 +202,11 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    // Một đoạn mã quan trọng tôi đã cập nhật trong ChatActivity.java
     private void sendMessage() {
         String content = etInput.getText().toString().trim();
         if (content.isEmpty() && selectedImageUri == null) return;
+
         etInput.setText("");
         Uri currentUri = selectedImageUri; selectedImageUri = null;
 
@@ -212,23 +214,31 @@ public class ChatActivity extends AppCompatActivity {
         RequestBody rbContent = RequestBody.create(MediaType.parse("text/plain"), content);
         MultipartBody.Part bodyImage = currentUri != null ? prepareFilePart("image", currentUri) : null;
 
-        ApiClient.getClient(this).create(ApiService.class)
-                .sendGroupMessage(rbConvoId, rbContent, bodyImage).enqueue(new Callback<SendMessageResponse>() {
-                    @Override
-                    public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            Message sentMsg = response.body().getMessage();
-                            if (sentMsg.getSenderId() == null) sentMsg.setSenderId(myId);
-                            addMessageToList(sentMsg);
-                        }
-                    }
-                    @Override public void onFailure(Call<SendMessageResponse> call, Throwable t) {}
-                });
+        ApiService api = ApiClient.getClient(this).create(ApiService.class);
+        Call<SendMessageResponse> call;
+
+        if ("direct".equals(conversationType)) {
+            String recipientId = "";
+            for (Conversation.Participant p : currentParticipants) {
+                if (!p.getId().equals(myId)) { recipientId = p.getId(); break; }
+            }
+            RequestBody rbRecipient = RequestBody.create(MediaType.parse("text/plain"), recipientId);
+            call = api.sendDirectMessage(rbRecipient, rbContent, rbConvoId, bodyImage);
+        } else {
+            call = api.sendGroupMessage(rbConvoId, rbContent, bodyImage);
+        }
+
+        call.enqueue(new Callback<SendMessageResponse>() {
+            @Override
+            public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    addMessageToList(response.body().getMessage());
+                }
+            }
+            @Override public void onFailure(Call<SendMessageResponse> call, Throwable t) {}
+        });
     }
 
-    // ... các phần khác giữ nguyên ...
-
-    // Tìm hàm onResume và cập nhật:
     @Override
     protected void onResume() {
         super.onResume();
@@ -266,10 +276,6 @@ public class ChatActivity extends AppCompatActivity {
         socketManager.addMessageListener(messageListener);
     }
 
-// ... các phần còn lại giữ nguyên ...
-
-
-    // Trong ChatActivity.java, tìm và sửa hàm updateHeaderStatus
     private void updateHeaderStatus() {
         View dot = findViewById(R.id.viewStatusDot);
         TextView tvStatus = findViewById(R.id.tvOnlineStatus);

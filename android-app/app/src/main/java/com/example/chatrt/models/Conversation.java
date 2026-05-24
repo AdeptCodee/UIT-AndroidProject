@@ -1,5 +1,6 @@
 package com.example.chatrt.models;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +35,9 @@ public class Conversation {
     // --- Các Class phụ bên trong (Nested Classes) ---
 
     public static class Participant {
-        @SerializedName("_id")
-        private String id; // Đây là ID người dùng
+        // Cập nhật: Server có thể trả về _id hoặc userId tùy trường hợp (Socket vs API)
+        @SerializedName(value = "_id", alternate = {"userId"})
+        private String id;
 
         @SerializedName("displayName")
         private String displayName;
@@ -69,24 +71,26 @@ public class Conversation {
         @SerializedName("content")
         private String content;
 
-        // THAY ĐỔI: senderId bây giờ là một Object User thu nhỏ, không phải String
+        /**
+         * FIX TRIỆT ĐỂ: Dùng JsonElement để GSON không bị crash khi gặp String thay vì Object.
+         * Lỗi "Expected BEGIN_OBJECT but was STRING" xảy ra khi field này được định nghĩa là 1 Class.
+         */
         @SerializedName("senderId")
-        private SenderInfo sender;
+        private JsonElement senderId;
 
         @SerializedName("createdAt")
         private String createdAt;
 
         public String getContent() { return content; }
 
-        public static class SenderInfo {
-            @SerializedName("_id")
-            private String id;
-            @SerializedName("displayName")
-            private String displayName;
-            @SerializedName("avatarUrl")
-            private String avatarUrl;
-
-            public String getDisplayName() { return displayName; }
+        public String getSenderId() {
+            if (senderId == null || senderId.isJsonNull()) return null;
+            if (senderId.isJsonPrimitive()) return senderId.getAsString();
+            if (senderId.isJsonObject()) {
+                JsonElement idElem = senderId.getAsJsonObject().get("_id");
+                return idElem != null ? idElem.getAsString() : null;
+            }
+            return null;
         }
     }
 
@@ -108,5 +112,17 @@ public class Conversation {
 
     public void setUnreadCounts(Map<String, Integer> unreadCounts) {
         this.unreadCounts = unreadCounts;
+    }
+
+    public void setParticipants(List<Participant> participants) {
+        this.participants = participants;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setGroup(GroupInfo group) {
+        this.group = group;
     }
 }

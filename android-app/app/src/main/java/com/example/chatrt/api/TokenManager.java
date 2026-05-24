@@ -47,6 +47,7 @@ public class TokenManager {
     }
 
     public void clear() {
-        editor.clear().apply();
+        // Dùng commit() thay vì apply() để đảm bảo xóa dữ liệu ĐỒNG BỘ ngay lập tức khi logout
+        editor.clear().commit();
     }
 }

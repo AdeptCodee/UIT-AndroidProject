@@ -93,10 +93,14 @@
                     android:textStyle="bold" />
 
                 <ImageView
+                    android:id="@+id/btnAddGroup"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_alignParentEnd="true"
                     android:src="@android:drawable/ic_menu_add"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     app:tint="#374151" />
             </RelativeLayout>
 
@@ -122,10 +126,14 @@
                     android:textStyle="bold" />
 
                 <ImageView
+                    android:id="@+id/btnAddFriend"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_alignParentEnd="true"
                     android:src="@android:drawable/ic_menu_add"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     app:tint="#374151" />
             </RelativeLayout>
 
