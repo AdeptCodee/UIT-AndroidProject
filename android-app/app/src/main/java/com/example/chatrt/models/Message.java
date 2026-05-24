@@ -1,17 +1,15 @@
 package com.example.chatrt.models;
 
-import com.google.gson.annotations.SerializedName;/**
- * Class này mô phỏng lại model Message.js từ Backend.
- * Dùng để chứa thông tin của một tin nhắn trong cuộc trò chuyện.
- */
-public class Message {
+import com.google.gson.annotations.SerializedName;
 
+public class Message {
     @SerializedName("_id")
     private String id;
 
     @SerializedName("conversationId")
     private String conversationId;
 
+    // QUAN TRỌNG: Ở danh sách tin nhắn, Server trả về String ID
     @SerializedName("senderId")
     private String senderId;
 
@@ -24,8 +22,7 @@ public class Message {
     @SerializedName("createdAt")
     private String createdAt;
 
-    // --- Các hàm Getter và Setter ---
-
+    // --- Getters và Setters ---
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

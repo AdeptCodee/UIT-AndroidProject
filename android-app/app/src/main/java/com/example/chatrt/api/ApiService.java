@@ -10,7 +10,7 @@ import retrofit2.http.*;
 public interface ApiService {
 
     // ==========================================
-    // 1. AUTH SERVICE (Thay thế authService.ts)
+    // 1. AUTH SERVICE
     // ==========================================
     @POST("auth/signin")
     Call<AuthResponse> signIn(@Body Map<String, String> credentials);
@@ -25,13 +25,12 @@ public interface ApiService {
     Call<AuthResponse> refreshToken();
 
     @GET("users/me")
-    Call<User> fetchMe();
+    Call<SearchResponse> fetchMe();
 
 
     // ==========================================
-    // 2. CHAT SERVICE (Thay thế chatService.ts)
+    // 2. CHAT SERVICE
     // ==========================================
-    // Sửa lại dòng này
     @GET("conversations")
     Call<ConversationsResponse> getConversations();
 
@@ -43,25 +42,25 @@ public interface ApiService {
     );
 
     @POST("conversations")
-    Call<Conversation> createConversation(@Body Map<String, Object> data);
+    Call<CreateConversationResponse> createConversation(@Body Map<String, Object> data);
 
     @PATCH("conversations/{id}/seen")
     Call<Void> markAsSeen(@Path("id") String conversationId);
 
-    // Gửi tin nhắn cá nhân (có thể kèm ảnh)
+    // Gửi tin nhắn cá nhân (Đã sửa lại đúng tham số)
     @Multipart
     @POST("messages/direct")
-    Call<Message> sendDirectMessage(
+    Call<SendMessageResponse> sendDirectMessage(
             @Part("recipientId") RequestBody recipientId,
             @Part("content") RequestBody content,
             @Part("conversationId") RequestBody conversationId,
             @Part MultipartBody.Part image
     );
 
-    // Gửi tin nhắn nhóm (có thể kèm ảnh)
+    // Gửi tin nhắn nhóm (Đã sửa lại đúng tham số và kiểu trả về)
     @Multipart
     @POST("messages/group")
-    Call<Message> sendGroupMessage(
+    Call<SendMessageResponse> sendGroupMessage(
             @Part("conversationId") RequestBody conversationId,
             @Part("content") RequestBody content,
             @Part MultipartBody.Part image
@@ -69,10 +68,10 @@ public interface ApiService {
 
 
     // ==========================================
-    // 3. FRIEND SERVICE (Thay thế friendService.ts)
+    // 3. FRIEND SERVICE
     // ==========================================
     @GET("friends")
-    Call<List<User>> getFriendList();
+    Call<FriendsResponse> getFriendList();
 
     @GET("users/search")
     Call<SearchResponse> searchUser(@Query("username") String username);
@@ -91,7 +90,7 @@ public interface ApiService {
 
 
     // ==========================================
-    // 4. USER SERVICE (Thay thế userService.ts)
+    // 4. USER SERVICE
     // ==========================================
     @Multipart
     @POST("users/uploadAvatar")

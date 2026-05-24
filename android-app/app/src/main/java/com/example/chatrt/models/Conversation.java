@@ -99,4 +99,14 @@ public class Conversation {
     public LastMessage getLastMessage() { return lastMessage; }
     public Map<String, Integer> getUnreadCounts() { return unreadCounts; }
     public String getUpdatedAt() { return updatedAt; }
+
+    // --- ĐÃ BỔ SUNG: Các hàm Setter để cập nhật Real-time ---
+
+    public void setLastMessage(LastMessage lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
+    public void setUnreadCounts(Map<String, Integer> unreadCounts) {
+        this.unreadCounts = unreadCounts;
+    }
 }

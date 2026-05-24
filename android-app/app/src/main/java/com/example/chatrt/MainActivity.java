@@ -2,14 +2,15 @@ package com.example.chatrt;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
-
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.chatrt.api.ApiClient;
 import com.example.chatrt.api.ApiService;
+import com.example.chatrt.api.SocketManager;
 import com.example.chatrt.api.TokenManager;
+import com.example.chatrt.models.SearchResponse;
 import com.example.chatrt.models.User;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -27,22 +28,24 @@ public class MainActivity extends AppCompatActivity {
 
         tokenManager = new TokenManager(this);
 
-        // 1. Kiểm tra Token xem đã đăng nhập chưa
+        // 1. Kiểm tra xem đã có Token chưa
         if (tokenManager.getAccessToken() == null) {
             goToLogin();
             return;
         }
 
-        // 2. Nếu đã đăng nhập -> Hiển thị giao diện chính
         setContentView(R.layout.activity_main);
 
-        // 3. Lấy thông tin cá nhân của mình để lưu ID (Rất quan trọng cho Chat)
+        // 2. Lấy thông tin của tôi để lưu ID vào máy (dùng cho logic chat trái/phải)
         fetchMyInfo();
+        
+        // Kích hoạt kết nối Socket
+        SocketManager.getInstance(this).connect();
 
-        // 4. Cấu hình thanh điều hướng dưới cùng
+        // 3. Thiết lập thanh điều hướng dưới cùng
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
-        // Mặc định khi mở App sẽ vào tab Chat (số 3)
+        // Mặc định mở Tab Chat
         bottomNav.setSelectedItemId(R.id.nav_chat);
         loadFragment(new ChatFragment());
 
@@ -71,20 +74,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchMyInfo() {
-        // Sử dụng ApiClient và ApiService CHÍNH XÁC của dự án chúng ta
         ApiService apiService = ApiClient.getClient(this).create(ApiService.class);
-        apiService.fetchMe().enqueue(new Callback<User>() {
+
+        // Gọi API fetchMe để lấy ID của chính mình
+        apiService.fetchMe().enqueue(new Callback<SearchResponse>() {
             @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    // Lưu ID của mình vào TokenManager để các màn hình khác dùng để lọc "người kia"
-                    tokenManager.saveUserId(response.body().getId());
+            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getUser() != null) {
+                    User me = response.body().getUser();
+
+                    // Cất ID vào TokenManager để MessageAdapter có thể lấy ra so sánh
+                    tokenManager.saveUserId(me.getId());
+                    Log.d("MainActivity", "Đã lưu ID người dùng: " + me.getId());
                 }
             }
 
             @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                // Nếu lỗi thì thôi, sẽ thử lại sau
+            public void onFailure(Call<SearchResponse> call, Throwable t) {
+                Log.e("MainActivity", "Lỗi fetchMe: " + t.getMessage());
             }
         });
     }
@@ -97,12 +104,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performLogout() {
+        // NGẮT KẾT NỐI SOCKET NGAY LẬP TỨC
+        com.example.chatrt.api.SocketManager.getInstance(this).disconnect();
         tokenManager.clear();
         goToLogin();
     }
 
     private void goToLogin() {
-        startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 }

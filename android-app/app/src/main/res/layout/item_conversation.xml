@@ -8,17 +8,73 @@
     app:cardElevation="1dp">
 
     <LinearLayout
+        android:id="@+id/layoutConvoItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:padding="12dp"
         android:orientation="horizontal">
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/ivConvoAvatar"
+        <!-- VÙNG CHỨA AVATAR LINH HOẠT -->
+        <FrameLayout
             android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/edit_text_bg" />
+            android:layout_height="50dp">
+
+            <!-- 1. Hiển thị ảnh thật -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/ivConvoAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <!-- 2. Hiển thị chữ cái mặc định (Dùng khi ko có ảnh) -->
+            <TextView
+                android:id="@+id/tvDefaultAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/status_bg"
+                android:backgroundTint="@color/primary_purple"
+                android:gravity="center"
+                android:text="U"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:visibility="visible" />
+
+            <!-- 3. Hiển thị nhóm Avatar (Cho Group Chat) -->
+            <LinearLayout
+                android:id="@+id/layoutGroupAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:visibility="gone" />
+
+            <!-- DẤU CHẤM TRẠNG THÁI -->
+            <View
+                android:id="@+id/viewStatusDot"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="2dp"
+                android:background="@drawable/ic_status_dot"
+                android:visibility="gone" />
+
+            <!-- BADGE SỐ TIN NHẮN CHƯA ĐỌC -->
+            <TextView
+                android:id="@+id/tvUnreadCount"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/status_bg"
+                android:backgroundTint="#D946EF"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
