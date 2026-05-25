@@ -2,16 +2,33 @@ import Reminder from "../models/Reminder.js";
 
 export const createReminder = async (req, res) => {
   try {
-    const { conversationId, partnerId, content, dueDate } = req.body;
+    const {
+      conversationId,
+      partnerId,
+      content,
+      dueDate,
+      messageId,
+      creatorId,
+    } = req.body;
+
+    // Kiểm tra xem tin nhắn này đã được tạo nhắc nhở chưa (tránh trùng lặp)
+    const existing = await Reminder.findOne({ messageId });
+    if (existing) {
+      return res.status(200).json(existing);
+    }
+
     const reminder = await Reminder.create({
       conversationId,
-      creatorId: req.user._id,
+      messageId,
+      creatorId: creatorId || req.user._id,
       partnerId,
       content,
       dueDate: new Date(dueDate),
     });
+
     res.status(201).json(reminder);
   } catch (error) {
+    console.error("Lỗi tạo reminder:", error);
     res.status(500).json({ message: "Lỗi tạo nhắc hẹn" });
   }
 };
@@ -19,10 +36,8 @@ export const createReminder = async (req, res) => {
 export const getMyReminders = async (req, res) => {
   try {
     const now = new Date();
-    // Tự động xóa các nhắc hẹn đã qua ngày (Dọn dẹp database)
     await Reminder.deleteMany({ dueDate: { $lt: now } });
 
-    // Lấy danh sách nhắc hẹn liên quan đến user hiện tại
     const reminders = await Reminder.find({
       $or: [{ creatorId: req.user._id }, { partnerId: req.user._id }],
       dueDate: { $gte: now },

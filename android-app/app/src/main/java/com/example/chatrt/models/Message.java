@@ -1,5 +1,6 @@
 package com.example.chatrt.models;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 public class Message {
@@ -9,9 +10,8 @@ public class Message {
     @SerializedName("conversationId")
     private String conversationId;
 
-    // QUAN TRỌNG: Ở danh sách tin nhắn, Server trả về String ID
     @SerializedName("senderId")
-    private String senderId;
+    private JsonElement senderId; // Dùng JsonElement để cân cả String ID và Object
 
     @SerializedName("content")
     private String content;
@@ -22,22 +22,23 @@ public class Message {
     @SerializedName("createdAt")
     private String createdAt;
 
-    // --- Getters và Setters ---
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
 
     public String getConversationId() { return conversationId; }
-    public void setConversationId(String conversationId) { this.conversationId = conversationId; }
 
-    public String getSenderId() { return senderId; }
-    public void setSenderId(String senderId) { this.senderId = senderId; }
+    // Hàm helper lấy String ID an toàn
+    public String getSenderId() {
+        if (senderId == null || senderId.isJsonNull()) return null;
+        if (senderId.isJsonPrimitive()) return senderId.getAsString();
+        if (senderId.isJsonObject()) {
+            JsonElement idElem = senderId.getAsJsonObject().get("_id");
+            if (idElem == null) idElem = senderId.getAsJsonObject().get("userId");
+            return idElem != null ? idElem.getAsString() : null;
+        }
+        return null;
+    }
 
     public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-
     public String getImgUrl() { return imgUrl; }
-    public void setImgUrl(String imgUrl) { this.imgUrl = imgUrl; }
-
     public String getCreatedAt() { return createdAt; }
-    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

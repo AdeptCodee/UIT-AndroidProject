@@ -1,5 +1,6 @@
 package com.example.chatrt.models;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 import java.util.Date;
@@ -8,17 +9,32 @@ public class Reminder implements Serializable {
     @SerializedName("_id")
     private String id;
     private String conversationId;
-    private User creatorId;
-    private User partnerId;
+    @SerializedName("creatorId")
+    private JsonElement creatorId; 
+    @SerializedName("partnerId")
+    private JsonElement partnerId;
     private String content;
     private Date dueDate;
-    private Date createdAt;
 
     public String getId() { return id; }
-    public String getConversationId() { return conversationId; }
-    public User getCreatorId() { return creatorId; }
-    public User getPartnerId() { return partnerId; }
     public String getContent() { return content; }
     public Date getDueDate() { return dueDate; }
-    public Date getCreatedAt() { return createdAt; }
+
+    public String getCreatorId() { return getIdFromElem(creatorId); }
+    public String getPartnerId() { return getIdFromElem(partnerId); }
+
+    public User getCreatorUser() { return getUserFromElem(creatorId); }
+    public User getPartnerUser() { return getUserFromElem(partnerId); }
+
+    private String getIdFromElem(JsonElement e) {
+        if (e == null || e.isJsonNull()) return null;
+        if (e.isJsonPrimitive()) return e.getAsString();
+        if (e.isJsonObject()) return e.getAsJsonObject().get("_id").getAsString();
+        return null;
+    }
+
+    private User getUserFromElem(JsonElement e) {
+        if (e == null || e.isJsonNull() || e.isJsonPrimitive()) return null;
+        return new com.google.gson.Gson().fromJson(e, User.class);
+    }
 }

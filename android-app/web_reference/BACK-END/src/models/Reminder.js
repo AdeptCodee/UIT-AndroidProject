@@ -6,6 +6,10 @@ const reminderSchema = new mongoose.Schema({
     ref: "Conversation",
     required: true,
   },
+  messageId: {
+    type: String,
+    unique: true, // Tránh trùng lặp khi cả 2 bên cùng nhận tin nhắn
+  },
   creatorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "USERS",
@@ -15,7 +19,7 @@ const reminderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "USERS",
     required: true,
-  }, // Người cùng hội thoại
+  },
   content: { type: String, required: true },
   dueDate: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },

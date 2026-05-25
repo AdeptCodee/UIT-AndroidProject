@@ -33,26 +33,28 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Reminder reminder = reminderList.get(position);
         
-        User partner = reminder.getPartnerId();
-        // Nếu mình là partner thì hiển thị tên của creator
-        if (partner != null && partner.getId().equals(myId)) {
-            partner = reminder.getCreatorId();
-        }
+        User creator = reminder.getCreatorUser();
+        User partner = reminder.getPartnerUser();
+        String creatorId = reminder.getCreatorId();
+        String partnerId = reminder.getPartnerId();
 
-        String partnerName = (partner != null) ? partner.getDisplayName() : "Người dùng";
-        holder.tvTitle.setText("Bạn cùng với " + partnerName);
-        holder.tvContent.setText("Nội dung: " + reminder.getContent());
-        holder.tvDate.setText("Ngày hẹn: " + dateFormat.format(reminder.getDueDate()));
+        String creatorName = (creatorId != null && creatorId.equals(myId)) ? "Bạn" : 
+                            (creator != null ? creator.getDisplayName() : "Người dùng");
+        
+        String partnerName = (partnerId != null && partnerId.equals(myId)) ? "bạn" : 
+                            (partner != null ? partner.getDisplayName() : "đối phương");
+
+        // Cấu trúc yêu cầu: {Người gửi} đã nhắc {Người nhận} vào {Ngày}, {Nội dung}
+        holder.tvTitle.setText(creatorName + " đã nhắc " + partnerName);
+        holder.tvContent.setText(reminder.getContent());
+        holder.tvDate.setText("Vào ngày: " + dateFormat.format(reminder.getDueDate()));
     }
 
     @Override
-    public int getItemCount() {
-        return reminderList.size();
-    }
+    public int getItemCount() { return reminderList.size(); }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvContent, tvDate;
-
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tvReminderTitle);

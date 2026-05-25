@@ -43,25 +43,28 @@ public class ApiClient {
 
                 if (response.code() == 403 && !request.url().toString().contains("auth/refresh")) {
                     synchronized (ApiClient.class) {
-                        response.close();
-
                         Retrofit tempRetrofit = new Retrofit.Builder()
                                 .baseUrl(BASE_URL)
                                 .addConverterFactory(GsonConverterFactory.create())
                                 .build();
 
                         ApiService service = tempRetrofit.create(ApiService.class);
-                        retrofit2.Response<AuthResponse> refreshRes = service.refreshToken().execute();
+                        try {
+                            retrofit2.Response<AuthResponse> refreshRes = service.refreshToken().execute();
 
-                        if (refreshRes.isSuccessful() && refreshRes.body() != null) {
-                            String newAccess = refreshRes.body().getAccessToken();
-                            tokenManager.saveAccessToken(newAccess);
+                            if (refreshRes.isSuccessful() && refreshRes.body() != null) {
+                                response.close(); // Chỉ close khi chắc chắn thay thế bằng response mới
+                                String newAccess = refreshRes.body().getAccessToken();
+                                tokenManager.saveAccessToken(newAccess);
 
-                            Request newRequest = request.newBuilder()
-                                    .header("Authorization", "Bearer " + newAccess)
-                                    .build();
-                            return chain.proceed(newRequest);
-                        } else {
+                                Request newRequest = request.newBuilder()
+                                        .header("Authorization", "Bearer " + newAccess)
+                                        .build();
+                                return chain.proceed(newRequest);
+                            } else {
+                                tokenManager.clear();
+                            }
+                        } catch (Exception e) {
                             tokenManager.clear();
                         }
                     }
