@@ -11,11 +11,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import com.example.chatrt.models.AuthResponse;
 
 public class ApiClient {
-    // Đã cập nhật sang URL Backend trên Render
     private static final String BASE_URL = "https://uit-androidproject-backend.onrender.com/api/";
     private static Retrofit retrofit = null;
-    
-    // Thêm hàm resetClient để xóa instance cũ khi logout
+
     public static void resetClient() {
         retrofit = null;
     }
