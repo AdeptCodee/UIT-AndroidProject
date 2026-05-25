@@ -1,272 +1,398 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "ChatRT API",
+    "title": "ChatRT API Documentation",
     "version": "1.0.0",
-    "description": ""
+    "description": "Tài liệu API chi tiết cho hệ thống Chat Real-time đa nền tảng (Web & Android). Bao gồm các tính năng xác thực, quản lý người dùng, kết bạn và nhắn tin thời gian thực."
   },
   "servers": [
     {
-      "url": "http://localhost:5001/api"
+      "url": "https://uit-androidproject-backend.onrender.com/api",
+      "description": "Render Production Server"
+    },
+    {
+      "url": "http://localhost:5001/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Public APIs - Đăng ký, đăng nhập, cấp lại token"
+    },
+    {
+      "name": "Users",
+      "description": "Protected APIs - Quản lý thông tin cá nhân"
+    },
+    {
+      "name": "Friends",
+      "description": "Protected APIs - Gửi, nhận và xử lý lời mời kết bạn"
+    },
+    {
+      "name": "Conversations",
+      "description": "Protected APIs - Quản lý các nhóm và cuộc hội thoại"
+    },
+    {
+      "name": "Messages",
+      "description": "Protected APIs - Xử lý gửi tin nhắn 1-1 và tin nhắn nhóm"
     }
   ],
   "paths": {
     "/auth/signup": {
       "post": {
-        "summary": "SignUp",
+        "summary": "Đăng ký tài khoản mới",
         "tags": ["Authentication"],
-        "responses": {},
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string",
-                    "format": "color"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
-                    "type": "string"
-                  }
-                }
+                  "username": { "type": "string" },
+                  "password": { "type": "string", "format": "password" },
+                  "email": { "type": "string", "format": "email" },
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" }
+                },
+                "required": ["username", "password", "email"]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Đăng ký thành công!" },
+          "400": { "description": "Thiếu parameters" },
+          "409": { "description": "Trùng username" }
         }
       }
     },
     "/auth/signin": {
       "post": {
-        "summary": "SignIn",
-        "description": "Log in với username và password. Trả về access token trong res và refresh token trong cookie.",
+        "summary": "Đăng nhập",
+        "description": "Trả về access token. Refresh token được tự động lưu trong cookie.",
         "tags": ["Authentication"],
-        "responses": {
-          "200": {
-            "description": "User successfully signed in",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "User Hai User đã logged in!"
-                    },
-                    "accessToken": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    }
-                  },
-                  "required": ["message", "accessToken"]
-                }
-              }
-            }
-          },
-          "400": { "description": "Invalid input" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Internal server error" }
-        },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string",
-                    "format": "color"
-                  }
+                  "username": { "type": "string" },
+                  "password": { "type": "string", "format": "password" }
                 },
                 "required": ["username", "password"]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công" },
+          "401": { "description": "Sai username/password" }
         }
       }
     },
     "/auth/signout": {
       "post": {
-        "summary": "SignOut",
+        "summary": "Đăng xuất",
         "tags": ["Authentication"],
         "responses": {
-          "200": { "description": "Success" },
-          "500": { "description": "Internal server error" }
+          "200": { "description": "Đăng xuất thành công!" }
         }
       }
     },
     "/auth/refresh": {
       "post": {
-        "summary": "RefreshToken",
+        "summary": "Cấp lại Access Token",
+        "description": "Yêu cầu phải có Refresh Token trong Cookie.",
         "tags": ["Authentication"],
-        "responses": {}
+        "responses": {
+          "200": { "description": "Cấp token thành công" },
+          "401": { "description": "Token không tồn tại hoặc hết hạn" }
+        }
       }
     },
     "/users/me": {
       "get": {
-        "summary": "AuthMe",
-        "tags": ["Authentication"],
-        "responses": {}
+        "summary": "Lấy thông tin User hiện tại",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
+      }
+    },
+    "/users/search": {
+      "get": {
+        "summary": "Tìm kiếm User",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
+      }
+    },
+    "/users/uploadAvatar": {
+      "post": {
+        "summary": "Cập nhật ảnh đại diện",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File ảnh"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Upload thành công (Trả về URL Cloudinary)" }
+        }
       }
     },
     "/friends/requests": {
       "post": {
-        "summary": "SendFriendRequest",
+        "summary": "Gửi lời mời kết bạn",
         "tags": ["Friends"],
-        "responses": {},
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
                   "to": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "ID của người nhận"
                   },
-                  "message": {
-                    "type": "string"
-                  }
-                }
+                  "message": { "type": "string" }
+                },
+                "required": ["to"]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Đã gửi lời mời" }
         }
       },
       "get": {
-        "summary": "GetFriendRequests",
+        "summary": "Lấy danh sách lời mời kết bạn",
+        "description": "Bao gồm cả lời mời đã gửi (sent) và nhận (received).",
         "tags": ["Friends"],
-        "responses": {}
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
       }
     },
-    "/friends/requests/68faed19defb37e90657d7d6/accept": {
+    "/friends/requests/{requestId}/accept": {
       "post": {
-        "summary": "AcceptFriendRequest",
+        "summary": "Chấp nhận kết bạn",
         "tags": ["Friends"],
-        "responses": {}
-      }
-    },
-    "/friends/requests/68fb124874f8418a6bc83ed1/decline": {
-      "post": {
-        "summary": "DeclineFriendRequest",
-        "tags": ["Friends"],
-        "responses": {},
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
           }
+        ],
+        "responses": {
+          "200": { "description": "Đã thêm bạn bè thành công" }
+        }
+      }
+    },
+    "/friends/requests/{requestId}/decline": {
+      "post": {
+        "summary": "Từ chối kết bạn",
+        "tags": ["Friends"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Từ chối thành công (No Content)" }
         }
       }
     },
     "/friends/": {
       "get": {
-        "summary": "GetAllFriends",
+        "summary": "Lấy danh sách bạn bè",
         "tags": ["Friends"],
-        "responses": {}
-      }
-    },
-    "/messages/direct": {
-      "post": {
-        "summary": "SendDirectMessage",
-        "tags": ["Messages"],
-        "responses": {},
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "recipientId": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thành công" }
         }
       }
     },
     "/conversations/": {
       "post": {
-        "summary": "CreateConversation",
+        "summary": "Tạo cuộc trò chuyện mới (Cá nhân hoặc Nhóm)",
         "tags": ["Conversations"],
-        "responses": {},
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": {
-                    "type": "string"
-                  },
+                  "type": { "type": "string", "enum": ["direct", "group"] },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Bắt buộc nếu type là group"
                   },
                   "memberIds": {
                     "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
+                    "items": { "type": "string" }
                   }
-                }
+                },
+                "required": ["type", "memberIds"]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Tạo thành công" }
         }
       },
       "get": {
-        "summary": "GetConversations",
+        "summary": "Lấy danh sách tất cả cuộc hội thoại",
         "tags": ["Conversations"],
-        "responses": {}
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
       }
     },
-    "/conversations/68fb2e6a19c501587577291c/messages": {
+    "/conversations/{conversationId}/messages": {
       "get": {
-        "summary": "GetMessage",
+        "summary": "Lấy danh sách tin nhắn (Có phân trang)",
         "tags": ["Conversations"],
-        "responses": {}
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 50 }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Con trỏ để phân trang"
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Thành công" }
+        }
+      }
+    },
+    "/conversations/{conversationId}/seen": {
+      "patch": {
+        "summary": "Đánh dấu đã xem toàn bộ tin nhắn",
+        "tags": ["Conversations"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Cập nhật thành công" }
+        }
+      }
+    },
+    "/messages/direct": {
+      "post": {
+        "summary": "Gửi tin nhắn 1-1",
+        "tags": ["Messages"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipientId": { "type": "string" },
+                  "conversationId": { "type": "string" },
+                  "content": { "type": "string" },
+                  "image": { "type": "string", "format": "binary" }
+                },
+                "required": ["recipientId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Gửi thành công" },
+          "403": { "description": "Bị chặn bởi middleware checkFriendShip" }
+        }
       }
     },
     "/messages/group": {
       "post": {
-        "summary": "SendGroupMessage",
+        "summary": "Gửi tin nhắn nhóm",
         "tags": ["Messages"],
-        "responses": {},
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "conversationId": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                }
+                  "conversationId": { "type": "string" },
+                  "content": { "type": "string" },
+                  "image": { "type": "string", "format": "binary" }
+                },
+                "required": ["conversationId"]
               }
             }
+          }
+        },
+        "responses": {
+          "200": { "description": "Gửi thành công" },
+          "403": {
+            "description": "Bị chặn bởi middleware checkGroupMembership"
           }
         }
       }
@@ -277,13 +403,9 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "Nhập token lấy từ API đăng nhập (không cần chữ Bearer)."
       }
     }
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ]
+  }
 }

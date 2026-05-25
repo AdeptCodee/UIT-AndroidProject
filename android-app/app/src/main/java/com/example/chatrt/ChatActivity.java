@@ -22,12 +22,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.chatrt.api.*;
 import com.example.chatrt.models.*;
+import com.example.chatrt.utils.ReminderParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import okhttp3.MediaType;
@@ -92,7 +95,6 @@ public class ChatActivity extends AppCompatActivity {
         TextView tvTitle = findViewById(R.id.tvChatTitle);
         tvTitle.setText(chatName);
 
-        // Cập nhật Avatar ngay lập tức từ dữ liệu Intent truyền sang
         updateHeaderAvatar(chatName, avatarUrl);
 
         findViewById(R.id.btnChatBack).setOnClickListener(v -> finish());
@@ -100,7 +102,6 @@ public class ChatActivity extends AppCompatActivity {
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
-    // Hàm phụ để xử lý Avatar Header (Hiện ảnh hoặc chữ cái đầu)
     private void updateHeaderAvatar(String name, String url) {
         CircleImageView ivAvatar = findViewById(R.id.ivChatAvatar);
         TextView tvDefault = findViewById(R.id.tvChatDefaultAvatar);
@@ -153,7 +154,6 @@ public class ChatActivity extends AppCompatActivity {
                             currentParticipants.clear();
                             currentParticipants.addAll(c.getParticipants());
 
-                            // Cập nhật lại Avatar và Tên từ dữ liệu mới nhất của Server
                             if ("direct".equals(conversationType)) {
                                 for (Conversation.Participant p : currentParticipants) {
                                     if (!p.getId().equals(myId)) {
@@ -202,7 +202,6 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    // Một đoạn mã quan trọng tôi đã cập nhật trong ChatActivity.java
     private void sendMessage() {
         String content = etInput.getText().toString().trim();
         if (content.isEmpty() && selectedImageUri == null) return;
@@ -249,9 +248,7 @@ public class ChatActivity extends AppCompatActivity {
         if (conversationId == null) return;
         ApiService service = ApiClient.getClient(this).create(ApiService.class);
         service.markAsSeen(conversationId).enqueue(new Callback<Void>() {
-            @Override public void onResponse(Call<Void> call, Response<Void> response) {
-                // Server sẽ báo qua Socket cho ChatFragment xóa Badge
-            }
+            @Override public void onResponse(Call<Void> call, Response<Void> response) {}
             @Override public void onFailure(Call<Void> call, Throwable t) {}
         });
     }
@@ -262,12 +259,9 @@ public class ChatActivity extends AppCompatActivity {
 
         onlineListener = onlineIds -> runOnUiThread(this::updateHeaderStatus);
 
-        // Trong hàm setupSocket() của ChatActivity.java:
         messageListener = message -> runOnUiThread(() -> {
             if (message.getConversationId().equals(conversationId)) {
                 addMessageToList(message);
-
-                // NẾU ĐANG Ở TRONG MÀN HÌNH CHAT -> ĐÁNH DẤU ĐÃ ĐỌC NGAY
                 markConversationAsSeen();
             }
         });
@@ -280,7 +274,6 @@ public class ChatActivity extends AppCompatActivity {
         View dot = findViewById(R.id.viewStatusDot);
         TextView tvStatus = findViewById(R.id.tvOnlineStatus);
 
-        // Đảm bảo myId không bị null
         if (myId == null) myId = new TokenManager(this).getUserId();
 
         if (dot == null || tvStatus == null || currentParticipants.isEmpty() || myId == null) return;
@@ -313,6 +306,43 @@ public class ChatActivity extends AppCompatActivity {
         messageList.add(message);
         adapter.notifyItemInserted(messageList.size() - 1);
         rvMessages.scrollToPosition(messageList.size() - 1);
+
+        // Tự động kiểm tra nhắc hẹn
+        handleReminderAutoCreation(message);
+    }
+
+    private void handleReminderAutoCreation(Message message) {
+        if (!"direct".equals(conversationType) || message.getContent() == null) return;
+
+        ReminderParser.ReminderData data = ReminderParser.parse(message.getContent());
+        if (data != null) {
+            String partnerId = null;
+            for (Conversation.Participant p : currentParticipants) {
+                if (!p.getId().equals(myId)) {
+                    partnerId = p.getId();
+                    break;
+                }
+            }
+
+            if (partnerId != null) {
+                Map<String, Object> body = new HashMap<>();
+                body.put("conversationId", conversationId);
+                body.put("partnerId", partnerId);
+                body.put("content", data.content);
+                body.put("dueDate", data.dueDate);
+
+                ApiService api = ApiClient.getClient(this).create(ApiService.class);
+                api.createReminder(body).enqueue(new Callback<Reminder>() {
+                    @Override
+                    public void onResponse(Call<Reminder> call, Response<Reminder> response) {
+                        if (response.isSuccessful()) {
+                            Toast.makeText(ChatActivity.this, "Đã tự động tạo nhắc hẹn cho bạn!", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    @Override public void onFailure(Call<Reminder> call, Throwable t) {}
+                });
+            }
+        }
     }
 
     private MultipartBody.Part prepareFilePart(String partName, Uri fileUri) {

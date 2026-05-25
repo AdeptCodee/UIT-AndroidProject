@@ -14,6 +14,10 @@ import fs from "fs";
 import { app, server } from "./socket/index.js";
 import { v2 as cloudinary } from "cloudinary";
 
+
+import reminderRoutes from "./routes/reminderRoutes.js";
+
+
 dotenv.config();
 
 // const app = express();
@@ -22,7 +26,7 @@ const PORT = process.env.PORT || 5001;
 // middlewares
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.CLIENT_URL.split(","), credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
 // CLOUDINARY Configuration
 cloudinary.config({
@@ -37,6 +41,12 @@ const swaggerDocument = JSON.parse(
 );
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+
+// Reminder routes
+app.use("/api/reminders", reminderRoutes);
+
+
 
 // public routes
 app.use("/api/auth", authRoute);

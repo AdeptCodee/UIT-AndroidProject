@@ -12,6 +12,7 @@ import com.example.chatrt.models.AuthResponse;
 
 public class ApiClient {
     private static final String BASE_URL = "https://uit-androidproject-backend.onrender.com/api/";
+//    private static final String BASE_URL = "http://10.0.2.2:5001/api/";
     private static Retrofit retrofit = null;
 
     public static void resetClient() {

@@ -47,7 +47,7 @@ public interface ApiService {
     @PATCH("conversations/{id}/seen")
     Call<Void> markAsSeen(@Path("id") String conversationId);
 
-    // Gửi tin nhắn cá nhân (Đã sửa lại đúng tham số)
+    // Gửi tin nhắn cá nhân
     @Multipart
     @POST("messages/direct")
     Call<SendMessageResponse> sendDirectMessage(
@@ -57,7 +57,7 @@ public interface ApiService {
             @Part MultipartBody.Part image
     );
 
-    // Gửi tin nhắn nhóm (Đã sửa lại đúng tham số và kiểu trả về)
+    // Gửi tin nhắn nhóm
     @Multipart
     @POST("messages/group")
     Call<SendMessageResponse> sendGroupMessage(
@@ -95,4 +95,13 @@ public interface ApiService {
     @Multipart
     @POST("users/uploadAvatar")
     Call<User> uploadAvatar(@Part MultipartBody.Part avatar);
+
+    // ==========================================
+    // 5. REMINDER SERVICE
+    // ==========================================
+    @POST("reminders")
+    Call<Reminder> createReminder(@Body Map<String, Object> data);
+
+    @GET("reminders")
+    Call<List<Reminder>> getMyReminders();
 }
