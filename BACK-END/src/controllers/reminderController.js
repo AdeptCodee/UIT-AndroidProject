@@ -11,7 +11,6 @@ export const createReminder = async (req, res) => {
       creatorId,
     } = req.body;
 
-    // Kiểm tra xem tin nhắn này đã được tạo nhắc nhở chưa (tránh trùng lặp)
     const existing = await Reminder.findOne({ messageId });
     if (existing) {
       return res.status(200).json(existing);
@@ -38,10 +37,11 @@ export const getMyReminders = async (req, res) => {
     const now = new Date();
     await Reminder.deleteMany({ dueDate: { $lt: now } });
 
+    // SỬA LỖI: Populate đúng các trường displayName và avatarUrl
     const reminders = await Reminder.find({
       $or: [{ creatorId: req.user._id }, { partnerId: req.user._id }],
       dueDate: { $gte: now },
-    }).populate("creatorId partnerId", "username avatar");
+    }).populate("creatorId partnerId", "username displayName avatarUrl");
 
     res.status(200).json(reminders);
   } catch (error) {

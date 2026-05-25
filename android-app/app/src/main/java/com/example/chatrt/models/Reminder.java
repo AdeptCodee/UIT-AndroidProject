@@ -33,8 +33,8 @@ public class Reminder implements Serializable {
         return null;
     }
 
-    private User getUserFromElem(JsonElement e) {
-        if (e == null || e.isJsonNull() || e.isJsonPrimitive()) return null;
-        return new com.google.gson.Gson().fromJson(e, User.class);
+    private User getUserFromElem(JsonElement element) {
+        if (element == null || element.isJsonNull() || element.isJsonPrimitive()) return null;
+        return new com.google.gson.Gson().fromJson(element, User.class);
     }
 }

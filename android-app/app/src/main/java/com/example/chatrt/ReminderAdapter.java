@@ -29,22 +29,21 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ViewHo
         return new ViewHolder(view);
     }
 
+    // ReminderAdapter.java
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Reminder reminder = reminderList.get(position);
-        
+
         User creator = reminder.getCreatorUser();
         User partner = reminder.getPartnerUser();
-        String creatorId = reminder.getCreatorId();
-        String partnerId = reminder.getPartnerId();
 
-        String creatorName = (creatorId != null && creatorId.equals(myId)) ? "Bạn" : 
-                            (creator != null ? creator.getDisplayName() : "Người dùng");
-        
-        String partnerName = (partnerId != null && partnerId.equals(myId)) ? "bạn" : 
-                            (partner != null ? partner.getDisplayName() : "đối phương");
+        // Hiển thị tên thật (displayName), không dùng chữ "Bạn" để tránh nhầm lẫn
+        String creatorName = (creator != null && creator.getDisplayName() != null)
+                ? creator.getDisplayName() : "Người dùng";
+        String partnerName = (partner != null && partner.getDisplayName() != null)
+                ? partner.getDisplayName() : "đối phương";
 
-        // Cấu trúc yêu cầu: {Người gửi} đã nhắc {Người nhận} vào {Ngày}, {Nội dung}
+        // Cấu trúc: [Tên người gửi] đã nhắc [Tên người nhận]
         holder.tvTitle.setText(creatorName + " đã nhắc " + partnerName);
         holder.tvContent.setText(reminder.getContent());
         holder.tvDate.setText("Vào ngày: " + dateFormat.format(reminder.getDueDate()));
