@@ -14,8 +14,8 @@
         android:title="Chat" />
     <item
         android:id="@+id/nav_placeholder"
-        android:icon="@android:drawable/ic_menu_help"
-        android:title="More" />
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="Reminder" />
     <item
         android:id="@+id/nav_logout"
         android:icon="@android:drawable/ic_lock_power_off"

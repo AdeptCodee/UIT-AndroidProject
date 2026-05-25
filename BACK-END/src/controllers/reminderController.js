@@ -37,11 +37,12 @@ export const getMyReminders = async (req, res) => {
     const now = new Date();
     await Reminder.deleteMany({ dueDate: { $lt: now } });
 
-    // SỬA LỖI: Populate đúng các trường displayName và avatarUrl
     const reminders = await Reminder.find({
       $or: [{ creatorId: req.user._id }, { partnerId: req.user._id }],
       dueDate: { $gte: now },
-    }).populate("creatorId partnerId", "username displayName avatarUrl");
+    })
+      .populate("creatorId partnerId", "username displayName avatarUrl")
+      .sort({ dueDate: 1 });
 
     res.status(200).json(reminders);
   } catch (error) {
