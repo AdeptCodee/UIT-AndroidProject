@@ -26,6 +26,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.Map;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -90,6 +91,10 @@ public class ProfileFragment extends Fragment {
                     User user = response.body().getUser();
                     if (user != null) {
                         updateUI(user);
+
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).updateBottomNavigation(user);
+                        }
                     }
                 }
             }
@@ -98,7 +103,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateUI(User user) {
-        if (!isAdded()) return; // Đảm bảo Fragment vẫn còn gắn vào Activity
+        if (!isAdded()) return;
 
         String displayName = (user.getDisplayName() != null && !user.getDisplayName().isEmpty()) 
                 ? user.getDisplayName() : user.getUsername();
@@ -132,26 +137,37 @@ public class ProfileFragment extends Fragment {
             if (file == null) return;
 
             RequestBody requestFile = RequestBody.create(file, MediaType.parse(requireContext().getContentResolver().getType(uri)));
-            MultipartBody.Part body = MultipartBody.Part.createFormData("avatar", file.getName(), requestFile);
+            // Sử dụng tên trường "file" để khớp với Backend logic
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
             ApiService apiService = ApiClient.getClient(getContext()).create(ApiService.class);
-            apiService.uploadAvatar(body).enqueue(new Callback<User>() {
+            apiService.uploadAvatar(body).enqueue(new Callback<Map<String, String>>() {
                 @Override
-                public void onResponse(Call<User> call, Response<User> response) {
+                public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        User updatedUser = response.body();
                         Toast.makeText(getContext(), "Cập nhật ảnh đại diện thành công!", Toast.LENGTH_SHORT).show();
-                        updateUI(updatedUser);
-                        if (getActivity() instanceof MainActivity) {
-                            ((MainActivity) getActivity()).updateBottomNavigation(updatedUser);
+
+                        // 1. Cập nhật ảnh ngay lập tức ở Header của Profile
+                        String newAvatarUrl = response.body().get("avatarUrl");
+                        if (newAvatarUrl != null) {
+                            ivAvatar.setVisibility(View.VISIBLE);
+                            tvDefaultAvatar.setVisibility(View.GONE);
+                            Glide.with(ProfileFragment.this)
+                                    .load(newAvatarUrl)
+                                    .centerCrop()
+                                    .into(ivAvatar);
                         }
+
+                        // 2. Gọi lại fetchUserData để đồng bộ hóa mọi thứ (bao gồm Bottom Navigation)
+                        fetchUserData();
+
                     } else {
-                        Toast.makeText(getContext(), "Lỗi upload ảnh", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Lỗi upload ảnh: " + response.code(), Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
-                public void onFailure(Call<User> call, Throwable t) {
+                public void onFailure(Call<Map<String, String>> call, Throwable t) {
                     Toast.makeText(getContext(), "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });

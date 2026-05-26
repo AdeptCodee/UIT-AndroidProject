@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().getUser() != null) {
                     User me = response.body().getUser();
                     tokenManager.saveUserId(me.getId());
-                    
+
                     // Cập nhật Avatar và Username lên thanh điều hướng
                     updateBottomNavigation(me);
                 }

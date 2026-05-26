@@ -94,7 +94,7 @@ public interface ApiService {
     // ==========================================
     @Multipart
     @POST("users/uploadAvatar")
-    Call<User> uploadAvatar(@Part MultipartBody.Part avatar);
+    Call<Map<String, String>> uploadAvatar(@Part MultipartBody.Part avatar);
 
     // ==========================================
     // 5. REMINDER SERVICE
