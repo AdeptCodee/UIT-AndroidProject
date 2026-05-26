@@ -158,7 +158,8 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     }
 
     try {
-      const res = await fetch("http://localhost:5001/api/payments/bank-setup", {
+      const apiUrl = `${import.meta.env.VITE_API_URL}/payments/bank-setup`;
+      const res = await fetch(apiUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -201,7 +202,8 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
     setIsGeneratingQR(true);
     try {
-      const res = await fetch("http://localhost:5001/api/payments/qr", {
+      const apiUrl = `${import.meta.env.VITE_API_URL}/payments/qr`;
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
