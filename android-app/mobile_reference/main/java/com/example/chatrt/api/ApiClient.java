@@ -11,10 +11,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import com.example.chatrt.models.AuthResponse;
 
 public class ApiClient {
-    // Đã đổi sang 10.0.2.2 để máy ảo có thể gọi xuống Backend ở máy thật
-    // private static final String BASE_URL = "http://10.0.2.2:5001/api/";
-    // MỞ link Server thật lên để chạy thực tế
-    private static final String BASE_URL = "https://uit-chatrt-123-backend.onrender.com/api/";
+    private static final String BASE_URL = "https://uit-androidproject-backend.onrender.com/api/";
+//    private static final String BASE_URL = "http://10.0.2.2:5001/api/";
     private static Retrofit retrofit = null;
 
     public static void resetClient() {

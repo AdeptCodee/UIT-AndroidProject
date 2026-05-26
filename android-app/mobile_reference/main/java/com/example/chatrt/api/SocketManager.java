@@ -16,7 +16,7 @@ import io.socket.client.Socket;
 
 public class SocketManager {
     private static final String TAG = "SocketManager";
-    private static final String SOCKET_URL = "https://uit-chatrt-123-backend.onrender.com";
+    private static final String SOCKET_URL = "https://uit-androidproject-backend.onrender.com";
 //    private static final String SOCKET_URL = "http://10.0.2.2:5001";
     private static SocketManager instance;
     private Socket mSocket;

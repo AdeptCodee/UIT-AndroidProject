@@ -6,6 +6,9 @@ export interface USER {
   avatarUrl?: string;
   bio?: string;
   phone?: string;
+  accountNo?: string;
+  accountName?: string;
+  acqId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
