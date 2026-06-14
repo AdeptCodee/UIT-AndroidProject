@@ -104,4 +104,9 @@ public interface ApiService {
 
     @GET("reminders")
     Call<List<Reminder>> getMyReminders();
+    @PUT("payments/bank-setup")
+    Call<com.google.gson.JsonObject> setupBank(@Body java.util.Map<String, String> body);
+
+    @POST("payments/qr")
+    Call<com.google.gson.JsonObject> generateQr(@Body java.util.Map<String, Object> body);
 }

@@ -6,6 +6,7 @@ import userRoute from "./routes/userRoutes.js";
 import friendRoute from "./routes/friendRoutes.js";
 import messageRoute from "./routes/messageRoutes.js";
 import conversationRoute from "./routes/conversationRoutes.js";
+import paymentRoute from "./routes/paymentRoutes.js";
 import cookieParser from "cookie-parser";
 import { protectedRoute } from "./middlewares/authMiddleware.js";
 import cors from "cors";
@@ -14,9 +15,7 @@ import fs from "fs";
 import { app, server } from "./socket/index.js";
 import { v2 as cloudinary } from "cloudinary";
 
-
 import reminderRoutes from "./routes/reminderRoutes.js";
-
 
 dotenv.config();
 
@@ -42,11 +41,8 @@ const swaggerDocument = JSON.parse(
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-
 // Reminder routes
 app.use("/api/reminders", reminderRoutes);
-
-
 
 // public routes
 app.use("/api/auth", authRoute);
@@ -57,6 +53,7 @@ app.use("/api/users", userRoute);
 app.use("/api/friends", friendRoute);
 app.use("/api/messages", messageRoute);
 app.use("/api/conversations", conversationRoute);
+app.use("/api/payments", paymentRoute);
 
 connectDB().then(() => {
   server.listen(PORT, () => {

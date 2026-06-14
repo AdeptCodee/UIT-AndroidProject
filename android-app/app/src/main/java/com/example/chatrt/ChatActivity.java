@@ -1,20 +1,20 @@
 package com.example.chatrt;
 
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,8 +24,8 @@ import com.example.chatrt.api.*;
 import com.example.chatrt.models.*;
 import com.example.chatrt.utils.ReminderParser;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +50,10 @@ public class ChatActivity extends AppCompatActivity {
     private EditText etInput;
     private SocketManager socketManager;
     private Uri selectedImageUri = null;
+    private String nextCursor;
+    private boolean isFetchingMessages = false;
+    private boolean hasMoreMessages = true;
+    private LinearLayoutManager layoutManager;
 
     private SocketManager.OnOnlineUsersChangedListener onlineListener;
     private SocketManager.MessageListener messageListener;
@@ -67,7 +71,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // Khôi phục lấy dữ liệu từ Intent
         conversationId = getIntent().getStringExtra("CONVERSATION_ID");
         chatName = getIntent().getStringExtra("CHAT_NAME");
         avatarUrl = getIntent().getStringExtra("AVATAR_URL");
@@ -92,8 +95,15 @@ public class ChatActivity extends AppCompatActivity {
         tvTitle.setText(chatName);
         updateHeaderAvatar(chatName, avatarUrl);
 
-        // KHÔI PHỤC NÚT BACK
-        findViewById(R.id.btnChatBack).setOnClickListener(v -> finish());
+        ImageView btnBack = findViewById(R.id.btnChatBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
+
+        ImageView btnQrCode = findViewById(R.id.btnQrCode);
+        if (btnQrCode != null) {
+            btnQrCode.setOnClickListener(v -> showQrDialog());
+        }
 
         btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         btnSend.setOnClickListener(v -> sendMessage());
@@ -117,10 +127,20 @@ public class ChatActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         adapter = new MessageAdapter(messageList, myId, currentParticipants);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
         rvMessages.setAdapter(adapter);
+
+        rvMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (!recyclerView.canScrollVertically(-1) && !isFetchingMessages && hasMoreMessages && nextCursor != null) {
+                    fetchMessages(nextCursor);
+                }
+            }
+        });
     }
 
     private void fetchConversationDetails() {
@@ -156,20 +176,38 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void fetchMessages(String cursor) {
+        if (isFetchingMessages) return;
+        isFetchingMessages = true;
+
         ApiService service = ApiClient.getClient(this).create(ApiService.class);
         service.getMessages(conversationId, 20, cursor).enqueue(new Callback<MessagesResponse>() {
             @Override
             public void onResponse(Call<MessagesResponse> call, Response<MessagesResponse> response) {
+                isFetchingMessages = false;
                 if (response.isSuccessful() && response.body() != null) {
                     List<Message> newMessages = response.body().getMessages();
-                    if (newMessages != null) {
+                    nextCursor = response.body().getNextCursor();
+                    hasMoreMessages = nextCursor != null && !nextCursor.isEmpty();
+
+                    if (newMessages != null && !newMessages.isEmpty()) {
+                        int insertedCount = newMessages.size();
+                        boolean initialLoad = cursor == null;
                         messageList.addAll(0, newMessages);
-                        adapter.notifyDataSetChanged();
-                        rvMessages.scrollToPosition(messageList.size() - 1);
+                        if (initialLoad) {
+                            adapter.notifyDataSetChanged();
+                            rvMessages.scrollToPosition(messageList.size() - 1);
+                        } else {
+                            adapter.notifyItemRangeInserted(0, insertedCount);
+                            layoutManager.scrollToPositionWithOffset(insertedCount, 0);
+                        }
                     }
+                } else {
+                    isFetchingMessages = false;
                 }
             }
-            @Override public void onFailure(Call<MessagesResponse> call, Throwable t) {}
+            @Override public void onFailure(Call<MessagesResponse> call, Throwable t) {
+                isFetchingMessages = false;
+            }
         });
     }
 
@@ -182,22 +220,63 @@ public class ChatActivity extends AppCompatActivity {
         RequestBody rbContent = RequestBody.create(MediaType.parse("text/plain"), content);
 
         ApiService api = ApiClient.getClient(this).create(ApiService.class);
-        String recipientId = "";
-        for (Conversation.Participant p : currentParticipants) {
-            if (!p.getId().equals(myId)) { recipientId = p.getId(); break; }
+        MultipartBody.Part imagePart = null;
+
+        if (selectedImageUri != null) {
+            File imageFile = uriToFile(selectedImageUri);
+            if (imageFile != null) {
+                String mimeType = getContentResolver().getType(selectedImageUri);
+                if (mimeType == null) {
+                    mimeType = "image/*";
+                }
+                RequestBody reqFile = RequestBody.create(imageFile, MediaType.parse(mimeType));
+                imagePart = MultipartBody.Part.createFormData("image", imageFile.getName(), reqFile);
+            }
+            selectedImageUri = null;
         }
 
-        RequestBody rbRecipient = RequestBody.create(MediaType.parse("text/plain"), recipientId);
-        api.sendDirectMessage(rbRecipient, rbContent, rbConvoId, null).enqueue(new Callback<SendMessageResponse>() {
-            @Override
-            public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    addMessageToList(response.body().getMessage());
-                }
+        if ("direct".equals(conversationType)) {
+            String recipientId = "";
+            for (Conversation.Participant p : currentParticipants) {
+                if (!p.getId().equals(myId)) { recipientId = p.getId(); break; }
             }
-            @Override public void onFailure(Call<SendMessageResponse> call, Throwable t) {}
-        });
+            RequestBody rbRecipient = RequestBody.create(MediaType.parse("text/plain"), recipientId);
+            api.sendDirectMessage(rbRecipient, rbContent, rbConvoId, imagePart).enqueue(messageCallback);
+        } else {
+            api.sendGroupMessage(rbConvoId, rbContent, imagePart).enqueue(messageCallback);
+        }
     }
+
+    private File uriToFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+            File file = new File(getCacheDir(), "temp_image_" + System.currentTimeMillis() + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private final Callback<SendMessageResponse> messageCallback = new Callback<SendMessageResponse>() {
+        @Override
+        public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
+            if (response.isSuccessful() && response.body() != null) {
+                addMessageToList(response.body().getMessage());
+            }
+        }
+        @Override public void onFailure(Call<SendMessageResponse> call, Throwable t) {}
+    };
 
     private void setupSocket() {
         socketManager.connect();
@@ -295,4 +374,218 @@ public class ChatActivity extends AppCompatActivity {
             socketManager.removeMessageListener(messageListener);
         }
     }
+
+    private void showQrDialog() {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.setContentView(R.layout.dialog_qr_payment);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        View layoutCreateQr = dialog.findViewById(R.id.layoutCreateQr);
+        View layoutSetupBank = dialog.findViewById(R.id.layoutSetupBank);
+        android.widget.Button btnTabCreate = dialog.findViewById(R.id.btnTabCreate);
+        android.widget.Button btnTabSetup = dialog.findViewById(R.id.btnTabSetup);
+
+        Spinner spinnerBank = dialog.findViewById(R.id.spinnerBank);
+        String[] bankNames = {"MBBank - Ngân hàng Quân Đội", "Vietcombank", "VietinBank", "BIDV", "TPBank"};
+        String[] bankCodes = {"970422", "970436", "970415", "970418", "970423"};
+        ArrayAdapter<String> bankAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, bankNames);
+        if (spinnerBank != null) spinnerBank.setAdapter(bankAdapter);
+
+        EditText etBankAccNo = dialog.findViewById(R.id.etBankAccNo);
+        EditText etBankAccName = dialog.findViewById(R.id.etBankAccName);
+
+        // --- FETCH DỮ LIỆU CŨ ĐỂ HIỂN THỊ ---
+        ApiService apiService = ApiClient.getClient(this).create(ApiService.class);
+        apiService.fetchMe().enqueue(new Callback<SearchResponse>() {
+            @Override
+            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    User user = response.body().getUser();
+                    if (user != null) {
+                        if (etBankAccNo != null) etBankAccNo.setText(user.getAccountNo());
+                        if (etBankAccName != null) etBankAccName.setText(user.getAccountName());
+                        if (spinnerBank != null && user.getAcqId() != null) {
+                            for (int i = 0; i < bankCodes.length; i++) {
+                                if (bankCodes[i].equals(user.getAcqId())) {
+                                    spinnerBank.setSelection(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            @Override public void onFailure(Call<SearchResponse> call, Throwable t) {}
+        });
+
+        if (btnTabCreate != null) {
+            btnTabCreate.setOnClickListener(v -> {
+                if (layoutCreateQr != null) layoutCreateQr.setVisibility(View.VISIBLE);
+                if (layoutSetupBank != null) layoutSetupBank.setVisibility(View.GONE);
+                btnTabCreate.setBackgroundTintList(ColorStateList.valueOf(0xFF0D6EFD));
+                btnTabCreate.setTextColor(0xFFFFFFFF);
+                if (btnTabSetup != null) {
+                    btnTabSetup.setBackgroundTintList(ColorStateList.valueOf(0xFFF3F4F6));
+                    btnTabSetup.setTextColor(0xFF000000);
+                }
+            });
+        }
+
+        if (btnTabSetup != null) {
+            btnTabSetup.setOnClickListener(v -> {
+                if (layoutCreateQr != null) layoutCreateQr.setVisibility(View.GONE);
+                if (layoutSetupBank != null) layoutSetupBank.setVisibility(View.VISIBLE);
+                btnTabSetup.setBackgroundTintList(ColorStateList.valueOf(0xFF0D6EFD));
+                btnTabSetup.setTextColor(0xFFFFFFFF);
+                if (btnTabCreate != null) {
+                    btnTabCreate.setBackgroundTintList(ColorStateList.valueOf(0xFFF3F4F6));
+                    btnTabCreate.setTextColor(0xFF000000);
+                }
+            });
+        }
+
+        android.widget.Button btnSaveBank = dialog.findViewById(R.id.btnSaveBank);
+        if (btnSaveBank != null) {
+            btnSaveBank.setOnClickListener(v -> {
+                if (etBankAccNo == null || etBankAccName == null) return;
+                String accNo = etBankAccNo.getText().toString().trim();
+                String accName = etBankAccName.getText().toString().trim();
+                String selectedBankCode = bankCodes[spinnerBank.getSelectedItemPosition()];
+
+                if (accNo.isEmpty() || accName.isEmpty()) {
+                    Toast.makeText(this, "Nhập đủ thông tin ngân hàng!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Map<String, String> body = new HashMap<>();
+                body.put("accountNo", accNo);
+                body.put("accountName", accName);
+                body.put("acqId", selectedBankCode);
+
+                apiService.setupBank(body).enqueue(new Callback<com.google.gson.JsonObject>() {
+                    @Override
+                    public void onResponse(Call<com.google.gson.JsonObject> call, Response<com.google.gson.JsonObject> response) {
+                        if (response.isSuccessful()) {
+                            Toast.makeText(ChatActivity.this, "Lưu tài khoản thành công!", Toast.LENGTH_SHORT).show();
+
+                            // Refresh my profile immediately so UI reflects saved bank info
+                            apiService.fetchMe().enqueue(new Callback<SearchResponse>() {
+                                @Override public void onResponse(Call<SearchResponse> call, Response<SearchResponse> resp) {
+                                    if (resp.isSuccessful() && resp.body() != null) {
+                                        User updated = resp.body().getUser();
+                                        if (updated != null) {
+                                            if (etBankAccNo != null) etBankAccNo.setText(updated.getAccountNo());
+                                            if (etBankAccName != null) etBankAccName.setText(updated.getAccountName());
+                                            if (spinnerBank != null && updated.getAcqId() != null) {
+                                                for (int i = 0; i < bankCodes.length; i++) {
+                                                    if (bankCodes[i].equals(updated.getAcqId())) { spinnerBank.setSelection(i); break; }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                @Override public void onFailure(Call<SearchResponse> call, Throwable t) {}
+                            });
+
+                            if (btnTabCreate != null) btnTabCreate.performClick();
+                        } else {
+                            try {
+                                String err = response.errorBody() != null ? response.errorBody().string() : "Lỗi không xác định";
+                                Toast.makeText(ChatActivity.this, "Lỗi " + response.code() + ": " + err, Toast.LENGTH_LONG).show();
+                            } catch (Exception e) { e.printStackTrace(); }
+                        }
+                    }
+                    @Override public void onFailure(Call<com.google.gson.JsonObject> call, Throwable t) {
+                        Toast.makeText(ChatActivity.this, "Lỗi kết nối!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+
+        android.widget.Button btnSendQr = dialog.findViewById(R.id.btnSendQr);
+        if (btnSendQr != null) {
+            btnSendQr.setOnClickListener(v -> {
+                EditText etQrAmount = dialog.findViewById(R.id.etQrAmount);
+                EditText etQrContent = dialog.findViewById(R.id.etQrContent);
+                if (etQrAmount == null || etQrContent == null) return;
+
+                String amount = etQrAmount.getText().toString().trim();
+                String content = etQrContent.getText().toString().trim();
+                if (amount.isEmpty()) {
+                    Toast.makeText(this, "Vui lòng nhập số tiền!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                btnSendQr.setText("Đang xử lý...");
+                btnSendQr.setEnabled(false);
+
+                Map<String, Object> body = new HashMap<>();
+                body.put("amount", Integer.parseInt(amount));
+                body.put("addInfo", content.isEmpty() ? "Chuyen tien" : content);
+
+                apiService.generateQr(body).enqueue(new Callback<com.google.gson.JsonObject>() {
+                    @Override
+                    public void onResponse(Call<com.google.gson.JsonObject> call, Response<com.google.gson.JsonObject> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            try {
+                                String base64String = response.body().get("qrDataURL").getAsString();
+                                if (base64String.contains(",")) base64String = base64String.split(",")[1];
+                                byte[] decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT);
+
+                                java.io.File file = new java.io.File(getCacheDir(), "qr_payment.png");
+                                java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+                                fos.write(decodedBytes);
+                                fos.flush(); fos.close();
+
+                                RequestBody reqFile = RequestBody.create(MediaType.parse("image/png"), file);
+                                MultipartBody.Part imagePart = MultipartBody.Part.createFormData("image", file.getName(), reqFile);
+                                RequestBody rbConvoId = RequestBody.create(MediaType.parse("text/plain"), conversationId);
+                                String captionText = "💸 Yêu cầu chuyển tiền: " + amount + " VNĐ\nNội dung: " + (content.isEmpty() ? "Chuyen tien" : content);
+                                RequestBody rbContent = RequestBody.create(MediaType.parse("text/plain"), captionText);
+
+                                if ("direct".equals(conversationType)) {
+                                    String recipientId = "";
+                                    for (Conversation.Participant p : currentParticipants) {
+                                        if (!p.getId().equals(myId)) { recipientId = p.getId(); break; }
+                                    }
+                                    RequestBody rbRecipient = RequestBody.create(MediaType.parse("text/plain"), recipientId);
+                                    apiService.sendDirectMessage(rbRecipient, rbContent, rbConvoId, imagePart).enqueue(qrResultCallback);
+                                } else {
+                                    apiService.sendGroupMessage(rbConvoId, rbContent, imagePart).enqueue(qrResultCallback);
+                                }
+                                dialog.dismiss();
+                            } catch (Exception e) { e.printStackTrace(); }
+                        } else {
+                            btnSendQr.setText("Gửi mã QR");
+                            btnSendQr.setEnabled(true);
+                            if (response.code() == 400) {
+                                Toast.makeText(ChatActivity.this, "Vui lòng cài đặt ngân hàng trước!", Toast.LENGTH_SHORT).show();
+                                if (btnTabSetup != null) btnTabSetup.performClick();
+                            } else {
+                                try {
+                                    Toast.makeText(ChatActivity.this, "Lỗi: " + response.errorBody().string(), Toast.LENGTH_LONG).show();
+                                } catch (Exception e) { e.printStackTrace(); }
+                            }
+                        }
+                    }
+                    @Override public void onFailure(Call<com.google.gson.JsonObject> call, Throwable t) {
+                        btnSendQr.setText("Gửi mã QR");
+                        btnSendQr.setEnabled(true);
+                    }
+                });
+            });
+        }
+        dialog.show();
+    }
+
+    private final Callback<SendMessageResponse> qrResultCallback = new Callback<SendMessageResponse>() {
+        @Override
+        public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
+            if (response.isSuccessful() && response.body() != null) {
+                addMessageToList(response.body().getMessage());
+            }
+        }
+        @Override public void onFailure(Call<SendMessageResponse> call, Throwable t) {}
+    };
 }

@@ -39,7 +39,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       sparse: true, // Cho phép giá trị trống
     },
+<<<<<<< HEAD
     },
+=======
+    accountNo: {
+      type: String,
+      trim: true,
+    },
+    accountName: {
+      type: String,
+      trim: true,
+    },
+    acqId: {
+      type: String,
+      trim: true,
+    },
+  },
+>>>>>>> repo-moi/main
   {
     timestamps: true,
   },

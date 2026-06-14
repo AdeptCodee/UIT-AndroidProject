@@ -6,6 +6,12 @@ export interface USER {
   avatarUrl?: string;
   bio?: string;
   phone?: string;
+<<<<<<< HEAD
+=======
+  accountNo?: string;
+  accountName?: string;
+  acqId?: string;
+>>>>>>> repo-moi/main
   createdAt?: string;
   updatedAt?: string;
 }

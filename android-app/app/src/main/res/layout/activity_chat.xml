@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#F3F4F6">
 
-    <!-- Header -->
     <LinearLayout
         android:id="@+id/chatHeader"
         android:layout_width="match_parent"
@@ -18,9 +17,15 @@
 
         <ImageView
             android:id="@+id/btnChatBack"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@android:drawable/ic_menu_revert" />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginStart="-4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#111827" />
 
         <FrameLayout
             android:layout_width="40dp"
@@ -79,7 +84,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Danh sách tin nhắn -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMessages"
         android:layout_width="match_parent"
@@ -88,7 +92,6 @@
         android:layout_below="@id/chatHeader"
         android:padding="10dp" />
 
-    <!-- Ô nhập tin nhắn -->
     <LinearLayout
         android:id="@+id/inputArea"
         android:layout_width="match_parent"
@@ -106,6 +109,14 @@
             android:layout_marginEnd="8dp"
             android:src="@android:drawable/ic_menu_gallery"
             app:tint="@color/primary_purple" />
+
+        <ImageView
+            android:id="@+id/btnQrCode"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/baseline_qr_code_scanner_24"
+            app:tint="#0D6EFD" />
 
         <EditText
             android:id="@+id/etMessageInput"

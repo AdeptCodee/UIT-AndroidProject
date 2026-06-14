@@ -40,8 +40,13 @@ export function SignInForm({
     const { username, password } = data;
 
     // Gọi backend API để đăng nhập
+<<<<<<< HEAD
     const result = await signIn(username, password);
     
+=======
+    await signIn(username, password);
+
+>>>>>>> repo-moi/main
     // Kiểm tra xem đăng nhập có thành công hay không bằng cách kiểm tra accessToken
     const { accessToken } = useAuthStore.getState();
     if (accessToken) {

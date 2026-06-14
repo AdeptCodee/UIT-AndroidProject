@@ -3,7 +3,10 @@ import ChatCard from "./ChatCard";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
 import { cn } from "@/lib/utils";
+<<<<<<< HEAD
 import { User } from "lucide-react";
+=======
+>>>>>>> repo-moi/main
 import StatusBadge from "./StatusBadge";
 import UnreadCountBadge from "./UnreadCountBadge";
 import UserAvatar from "./UserAvatar";

@@ -1,6 +1,13 @@
 package com.example.chatrt.api;
 
 import android.content.Context;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -11,9 +18,25 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import com.example.chatrt.models.AuthResponse;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://uit-androidproject-backend.onrender.com/api/";
-//    private static final String BASE_URL = "http://10.0.2.2:5001/api/";
+    // KHÔI PHỤC URL CHUẨN từ mobile_reference
+    private static final String BASE_URL = "https://uit-chatrt-123-backend.onrender.com/api/";
     private static Retrofit retrofit = null;
+
+    // CookieJar để quản lý refreshToken cookie (Backend yêu cầu Cookie để làm mới token)
+    private static final CookieJar cookieJar = new CookieJar() {
+        private final Map<String, List<Cookie>> cookieStore = new HashMap<>();
+
+        @Override
+        public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+            cookieStore.put(url.host(), cookies);
+        }
+
+        @Override
+        public List<Cookie> loadForRequest(HttpUrl url) {
+            List<Cookie> cookies = cookieStore.get(url.host());
+            return cookies != null ? cookies : new ArrayList<>();
+        }
+    };
 
     public static void resetClient() {
         retrofit = null;
@@ -41,11 +64,14 @@ public class ApiClient {
                 Request request = chain.request();
                 Response response = chain.proceed(request);
 
+                // Nếu nhận mã 403 (Token hết hạn), thử tự động làm mới
                 if (response.code() == 403 && !request.url().toString().contains("auth/refresh")) {
                     synchronized (ApiClient.class) {
+                        // Gọi API refresh có kèm theo Cookie quản lý bởi cookieJar
                         Retrofit tempRetrofit = new Retrofit.Builder()
                                 .baseUrl(BASE_URL)
                                 .addConverterFactory(GsonConverterFactory.create())
+                                .client(new OkHttpClient.Builder().cookieJar(cookieJar).build())
                                 .build();
 
                         ApiService service = tempRetrofit.create(ApiService.class);
@@ -53,7 +79,7 @@ public class ApiClient {
                             retrofit2.Response<AuthResponse> refreshRes = service.refreshToken().execute();
 
                             if (refreshRes.isSuccessful() && refreshRes.body() != null) {
-                                response.close(); // Chỉ close khi chắc chắn thay thế bằng response mới
+                                response.close();
                                 String newAccess = refreshRes.body().getAccessToken();
                                 tokenManager.saveAccessToken(newAccess);
 
@@ -62,10 +88,13 @@ public class ApiClient {
                                         .build();
                                 return chain.proceed(newRequest);
                             } else {
-                                tokenManager.clear();
+                                // Nếu refresh lỗi (401/403), mới xóa token để yêu cầu login lại
+                                if (refreshRes.code() == 401 || refreshRes.code() == 403) {
+                                    tokenManager.clear();
+                                }
                             }
                         } catch (Exception e) {
-                            tokenManager.clear();
+                            // Lỗi mạng tạm thời, không xóa token
                         }
                     }
                 }
@@ -73,6 +102,7 @@ public class ApiClient {
             };
 
             OkHttpClient client = new OkHttpClient.Builder()
+                    .cookieJar(cookieJar)
                     .addInterceptor(logging)
                     .addInterceptor(authInterceptor)
                     .addInterceptor(refreshInterceptor)
