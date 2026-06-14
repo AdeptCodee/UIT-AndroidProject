@@ -19,7 +19,7 @@ import com.example.chatrt.models.AuthResponse;
 
 public class ApiClient {
     // KHÔI PHỤC URL CHUẨN từ mobile_reference
-    private static final String BASE_URL = "https://uit-chatrt-123-backend.onrender.com/api/";
+    private static final String BASE_URL = "https://uit-androidproject-backend.onrender.com/api/";
     private static Retrofit retrofit = null;
 
     // CookieJar để quản lý refreshToken cookie (Backend yêu cầu Cookie để làm mới token)

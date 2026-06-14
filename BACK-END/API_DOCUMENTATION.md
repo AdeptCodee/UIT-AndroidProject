@@ -7,7 +7,7 @@ API này phục vụ cho hệ thống ChatRT: đăng ký, đăng nhập, quản 
 > Base URL chung: `{{SERVER_URL}}/api`
 >
 > Trong môi trường phát triển: `http://localhost:5001/api`
-> Trong production (ứng với mobile hiện tại): `https://uit-chatrt-123-backend.onrender.com/api`
+> Trong production (ứng với mobile hiện tại): `https://uit-androidproject-backend.onrender.com/api`
 
 ## Authentication
 

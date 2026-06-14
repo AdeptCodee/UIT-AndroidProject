@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://uit-chatrt-123-backend.onrender.com/api",
+      "url": "https://uit-androidproject-backend.onrender.com/api",
       "description": "Production Server"
     },
     {
