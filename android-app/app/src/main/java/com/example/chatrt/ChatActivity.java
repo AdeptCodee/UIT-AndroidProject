@@ -24,6 +24,9 @@ import com.example.chatrt.api.*;
 import com.example.chatrt.models.*;
 import com.example.chatrt.utils.ReminderParser;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +50,10 @@ public class ChatActivity extends AppCompatActivity {
     private EditText etInput;
     private SocketManager socketManager;
     private Uri selectedImageUri = null;
+    private String nextCursor;
+    private boolean isFetchingMessages = false;
+    private boolean hasMoreMessages = true;
+    private LinearLayoutManager layoutManager;
 
     private SocketManager.OnOnlineUsersChangedListener onlineListener;
     private SocketManager.MessageListener messageListener;
@@ -120,10 +127,20 @@ public class ChatActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         adapter = new MessageAdapter(messageList, myId, currentParticipants);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
         rvMessages.setAdapter(adapter);
+
+        rvMessages.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (!recyclerView.canScrollVertically(-1) && !isFetchingMessages && hasMoreMessages && nextCursor != null) {
+                    fetchMessages(nextCursor);
+                }
+            }
+        });
     }
 
     private void fetchConversationDetails() {
@@ -159,20 +176,38 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void fetchMessages(String cursor) {
+        if (isFetchingMessages) return;
+        isFetchingMessages = true;
+
         ApiService service = ApiClient.getClient(this).create(ApiService.class);
         service.getMessages(conversationId, 20, cursor).enqueue(new Callback<MessagesResponse>() {
             @Override
             public void onResponse(Call<MessagesResponse> call, Response<MessagesResponse> response) {
+                isFetchingMessages = false;
                 if (response.isSuccessful() && response.body() != null) {
                     List<Message> newMessages = response.body().getMessages();
-                    if (newMessages != null) {
+                    nextCursor = response.body().getNextCursor();
+                    hasMoreMessages = nextCursor != null && !nextCursor.isEmpty();
+
+                    if (newMessages != null && !newMessages.isEmpty()) {
+                        int insertedCount = newMessages.size();
+                        boolean initialLoad = cursor == null;
                         messageList.addAll(0, newMessages);
-                        adapter.notifyDataSetChanged();
-                        rvMessages.scrollToPosition(messageList.size() - 1);
+                        if (initialLoad) {
+                            adapter.notifyDataSetChanged();
+                            rvMessages.scrollToPosition(messageList.size() - 1);
+                        } else {
+                            adapter.notifyItemRangeInserted(0, insertedCount);
+                            layoutManager.scrollToPositionWithOffset(insertedCount, 0);
+                        }
                     }
+                } else {
+                    isFetchingMessages = false;
                 }
             }
-            @Override public void onFailure(Call<MessagesResponse> call, Throwable t) {}
+            @Override public void onFailure(Call<MessagesResponse> call, Throwable t) {
+                isFetchingMessages = false;
+            }
         });
     }
 
@@ -185,6 +220,20 @@ public class ChatActivity extends AppCompatActivity {
         RequestBody rbContent = RequestBody.create(MediaType.parse("text/plain"), content);
 
         ApiService api = ApiClient.getClient(this).create(ApiService.class);
+        MultipartBody.Part imagePart = null;
+
+        if (selectedImageUri != null) {
+            File imageFile = uriToFile(selectedImageUri);
+            if (imageFile != null) {
+                String mimeType = getContentResolver().getType(selectedImageUri);
+                if (mimeType == null) {
+                    mimeType = "image/*";
+                }
+                RequestBody reqFile = RequestBody.create(imageFile, MediaType.parse(mimeType));
+                imagePart = MultipartBody.Part.createFormData("image", imageFile.getName(), reqFile);
+            }
+            selectedImageUri = null;
+        }
 
         if ("direct".equals(conversationType)) {
             String recipientId = "";
@@ -192,9 +241,30 @@ public class ChatActivity extends AppCompatActivity {
                 if (!p.getId().equals(myId)) { recipientId = p.getId(); break; }
             }
             RequestBody rbRecipient = RequestBody.create(MediaType.parse("text/plain"), recipientId);
-            api.sendDirectMessage(rbRecipient, rbContent, rbConvoId, null).enqueue(messageCallback);
+            api.sendDirectMessage(rbRecipient, rbContent, rbConvoId, imagePart).enqueue(messageCallback);
         } else {
-            api.sendGroupMessage(rbConvoId, rbContent, null).enqueue(messageCallback);
+            api.sendGroupMessage(rbConvoId, rbContent, imagePart).enqueue(messageCallback);
+        }
+    }
+
+    private File uriToFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+            File file = new File(getCacheDir(), "temp_image_" + System.currentTimeMillis() + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
